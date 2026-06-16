@@ -22,10 +22,10 @@ export default function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-30 bg-white border-b border-gray-100" style={{ boxShadow: '0 1px 0 rgba(0,0,0,0.05)' }}>
-        <div className="w-full px-6 md:px-10 h-16 flex items-center justify-between">
+        <div className="w-full px-6 md:px-10 h-16 flex items-center">
 
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 flex-shrink-0">
+          <Link to="/" className="flex items-center gap-2.5 flex-shrink-0 flex-1">
             <div className="w-8 h-8 bg-[#C0392B] rounded-lg flex items-center justify-center flex-shrink-0">
               <span className="text-white text-xs font-black">QS</span>
             </div>
@@ -45,7 +45,7 @@ export default function Navbar() {
           </nav>
 
           {/* Acciones */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-1 justify-end">
             {/* Cart */}
             <button
               onClick={() => setDrawerOpen(true)}
@@ -72,12 +72,24 @@ export default function Navbar() {
                 Iniciar Sesión
               </Link>
             ) : (
-              <button
-                onClick={handleLogout}
-                className="hidden md:flex items-center px-4 py-2 border border-gray-200 text-[#1C1C1E] text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Cerrar sesión
-              </button>
+              <div className="hidden md:flex items-center gap-2">
+                <Link
+                  to={user.role === 'ADMINISTRADOR' ? '/admin' : user.role === 'ASESOR_VENTAS' ? '/asesor' : '/mis-pedidos'}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-[#1C1C1E] text-white text-sm font-semibold rounded-lg hover:bg-[#2d2d2d] transition-colors active:scale-[0.98]"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round">
+                    <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+                  </svg>
+                  {user.role === 'ADMINISTRADOR' ? 'Panel de control' : 'Mis pedidos'}
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center px-4 py-2 border border-gray-200 text-[#1C1C1E] text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cerrar sesión
+                </button>
+              </div>
             )}
 
             {/* Hamburger */}
@@ -107,11 +119,21 @@ export default function Navbar() {
             {user?.role === 'CLIENTE' && (
               <NavLink to="/mis-pedidos" className={navLinkClass} onClick={() => setMenuOpen(false)}>Mis Pedidos</NavLink>
             )}
-            <div className="border-t border-gray-100 pt-4">
-              {!user
-                ? <Link to="/login" onClick={() => setMenuOpen(false)} className="flex justify-center w-full py-2.5 bg-[#C0392B] text-white text-sm font-semibold rounded-lg text-center hover:bg-[#A93226] transition-colors">Iniciar Sesión</Link>
-                : <button onClick={handleLogout} className="w-full py-2.5 border border-gray-200 text-[#1C1C1E] text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">Cerrar sesión</button>
-              }
+            <div className="border-t border-gray-100 pt-4 flex flex-col gap-2">
+              {!user ? (
+                <Link to="/login" onClick={() => setMenuOpen(false)} className="flex justify-center w-full py-2.5 bg-[#C0392B] text-white text-sm font-semibold rounded-lg text-center hover:bg-[#A93226] transition-colors">Iniciar Sesión</Link>
+              ) : (
+                <>
+                  <Link
+                    to={user.role === 'ADMINISTRADOR' ? '/admin' : user.role === 'ASESOR_VENTAS' ? '/asesor' : '/mis-pedidos'}
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center justify-center gap-2 w-full py-2.5 bg-[#1C1C1E] text-white text-sm font-semibold rounded-lg hover:bg-[#2d2d2d] transition-colors"
+                  >
+                    {user.role === 'ADMINISTRADOR' ? 'Panel de control' : 'Mis pedidos'}
+                  </Link>
+                  <button onClick={handleLogout} className="w-full py-2.5 border border-gray-200 text-[#1C1C1E] text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors">Cerrar sesión</button>
+                </>
+              )}
             </div>
           </div>
         )}
