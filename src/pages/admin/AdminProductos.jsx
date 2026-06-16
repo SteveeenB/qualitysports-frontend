@@ -9,9 +9,10 @@ import Badge from '../../components/ui/Badge'
 import Spinner from '../../components/ui/Spinner'
 
 const COP = n => '$' + new Intl.NumberFormat('es-CO').format(n ?? 0)
-const TALLAS = [35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45]
+const TALLAS = [34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45]
+const DEFAULT_TALLAS = [34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44]
 
-const EMPTY_FORM = { nombre: '', descripcion: '', precioBase: '', imagenUrl: '', categoriaId: '', tallas: [] }
+const EMPTY_FORM = { nombre: '', descripcion: '', precioBase: '', imagenUrl: '', categoriaId: '', tallas: DEFAULT_TALLAS }
 
 function ProductoModal({ open, onClose, editing, categorias, onSaved }) {
   const [form, setForm]             = useState(EMPTY_FORM)
@@ -256,7 +257,25 @@ function ProductoModal({ open, onClose, editing, categorias, onSaved }) {
 
           {/* Tallas */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tallas disponibles</label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">Tallas disponibles</label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, tallas: [...TALLAS] }))}
+                  className="text-xs px-2.5 py-1 rounded-lg border border-gray-200 text-gray-600 hover:border-red-400 hover:text-red-600 transition-all"
+                >
+                  Todas
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, tallas: [] }))}
+                  className="text-xs px-2.5 py-1 rounded-lg border border-gray-200 text-gray-600 hover:border-red-400 hover:text-red-600 transition-all"
+                >
+                  Ninguna
+                </button>
+              </div>
+            </div>
             <div className="flex flex-wrap gap-2">
               {TALLAS.map(t => (
                 <button
