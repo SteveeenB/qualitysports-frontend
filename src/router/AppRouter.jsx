@@ -30,7 +30,7 @@ import Acceso403 from '../pages/Acceso403'
 
 function PrivateRoute({ children, roles }) {
   const { user, loading } = useAuth()
-  if (loading) return null
+  if (loading) return <div className="min-h-screen bg-white" />
   if (!user) return <Navigate to="/login" replace />
   if (roles && !roles.includes(user.role)) return <Navigate to="/403" replace />
   return children
@@ -38,7 +38,7 @@ function PrivateRoute({ children, roles }) {
 
 function GuestRoute({ children }) {
   const { user, loading } = useAuth()
-  if (loading) return null
+  if (loading) return <div className="min-h-screen bg-white" />
   if (user) {
     if (user.role === 'ADMINISTRADOR') return <Navigate to="/admin" replace />
     if (user.role === 'ASESOR_VENTAS') return <Navigate to="/asesor" replace />
