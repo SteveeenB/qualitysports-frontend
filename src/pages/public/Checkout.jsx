@@ -1,28 +1,121 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
-import { crearPedido } from '../../api/pedidos'
+import { crearPedido, listarDescuentos } from '../../api/pedidos'
+import { departamentos } from 'colombia-territorial'
 import Spinner from '../../components/ui/Spinner'
 
 function formatCOP(n) {
   return new Intl.NumberFormat('es-CO').format(n)
 }
 
+// ── Combobox ─────────────────────────────────────────────────────────────────
+function Combobox({ options, value, onChange, placeholder, disabled = false }) {
+  const [query, setQuery]   = useState(value || '')
+  const [open, setOpen]     = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => { setQuery(value || '') }, [value])
+
+  useEffect(() => {
+    function handler(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const filtered = options.filter(o => o.toLowerCase().includes(query.toLowerCase()))
+
+  function select(opt) {
+    onChange(opt)
+    setQuery(opt)
+    setOpen(false)
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <input
+        type="text"
+        value={query}
+        disabled={disabled}
+        onChange={e => { setQuery(e.target.value); onChange(''); setOpen(true) }}
+        onFocus={() => setOpen(true)}
+        placeholder={placeholder}
+        className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#C0392B] disabled:bg-gray-100 disabled:text-gray-400"
+      />
+      {open && filtered.length > 0 && (
+        <ul className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-52 overflow-y-auto">
+          {filtered.map(opt => (
+            <li key={opt}
+              onMouseDown={() => select(opt)}
+              className="px-3.5 py-2 text-sm cursor-pointer hover:bg-[#FEF2F1] hover:text-[#C0392B]"
+            >{opt}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+// ── Field — módulo level para evitar pérdida de foco ─────────────────────────
+function Field({ label, placeholder, type = 'text', half = false, value, error, onChange, required = true }) {
+  return (
+    <div className={half ? 'col-span-1' : 'col-span-2'}>
+      <label className="block text-sm font-medium text-[#1C1C1E] mb-1.5">
+        {label}{required && <span className="text-[#C0392B]"> *</span>}
+      </label>
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className={`w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none transition-colors
+          ${error ? 'border-[#C0392B]' : 'border-gray-200 focus:border-[#C0392B]'}`}
+      />
+      {error && <p className="text-xs text-[#C0392B] mt-1">{error}</p>}
+    </div>
+  )
+}
+
+// ── Lógica de descuento (igual que backend) ───────────────────────────────────
+function calcularDescuento(subtotal, totalPares, reglas) {
+  if (!reglas || reglas.length === 0) return null
+  const regla = [...reglas]
+    .sort((a, b) => b.cantidadPares - a.cantidadPares)
+    .find(r => r.cantidadPares <= totalPares)
+  if (!regla) return null
+  const precioPorPar = regla.precioTotalPaquete / regla.cantidadPares
+  const totalNeto = precioPorPar * totalPares
+  const ahorro = subtotal - totalNeto
+  if (ahorro <= 0) return null
+  return { totalNeto, ahorro }
+}
+
+// ── Datos DIVIPOLA ────────────────────────────────────────────────────────────
+const DEPARTAMENTOS = departamentos.map(d => d.nombre).sort()
+const MUNICIPIOS_POR_DEP = Object.fromEntries(
+  departamentos.map(d => [d.nombre, d.municipios.map(m => m.nombre).sort()])
+)
+
 const INITIAL = {
   compradorNombre: '', compradorApellido: '', compradorCedula: '',
   compradorTelefono: '', compradorEmail: '',
-  direccionEnvio: '', municipio: '', departamento: '',
+  direccionEnvio: '', barrio: '', municipio: '', departamento: '',
   modalidadEntrega: 'DOMICILIO',
 }
 
 export default function Checkout() {
-  const { items, subtotal, clearCart } = useCart()
+  const { items: cartItems, subtotal, clearCart } = useCart()
   const navigate = useNavigate()
   const [form, setForm]     = useState(INITIAL)
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
+  const [reglas, setReglas] = useState([])
 
-  if (items.length === 0) {
+  useEffect(() => {
+    listarDescuentos().then(r => setReglas(r.data)).catch(() => {})
+  }, [])
+
+  if (cartItems.length === 0) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-24 text-center">
         <p className="text-gray-500 mb-4">Tu carrito está vacío.</p>
@@ -36,6 +129,11 @@ export default function Checkout() {
     setErrors(e => ({ ...e, [field]: '' }))
   }
 
+  function setDepartamento(dep) {
+    setForm(f => ({ ...f, departamento: dep, municipio: '' }))
+    setErrors(e => ({ ...e, departamento: '', municipio: '' }))
+  }
+
   function validate() {
     const e = {}
     if (!form.compradorNombre.trim())    e.compradorNombre    = 'Requerido'
@@ -44,10 +142,10 @@ export default function Checkout() {
     if (!form.compradorTelefono.trim())  e.compradorTelefono  = 'Requerido'
     if (!form.compradorEmail.trim())     e.compradorEmail     = 'Requerido'
     else if (!/\S+@\S+\.\S+/.test(form.compradorEmail)) e.compradorEmail = 'Correo inválido'
+    if (!form.departamento.trim()) e.departamento = 'Requerido'
+    if (!form.municipio.trim())    e.municipio    = 'Requerido'
     if (form.modalidadEntrega === 'DOMICILIO') {
       if (!form.direccionEnvio.trim()) e.direccionEnvio = 'Requerido'
-      if (!form.municipio.trim())      e.municipio      = 'Requerido'
-      if (!form.departamento.trim())   e.departamento   = 'Requerido'
     }
     setErrors(e)
     return Object.keys(e).length === 0
@@ -58,42 +156,26 @@ export default function Checkout() {
     if (!validate()) return
     setLoading(true)
     try {
-      const detalles = items.map(i => ({
+      const items = cartItems.map(i => ({
         productoId: i.product.id,
         cantidad: i.cantidad,
-        tallaSeleccionada: i.talla,
+        talla: Number(i.talla),
       }))
-      const payload = { ...form, detalles }
+      const payload = { ...form, items }
       const res = await crearPedido(payload)
       clearCart()
       navigate(`/confirmacion/${res.data.pedidoId}`, { state: res.data })
-    } catch (err) {
+    } catch {
       alert('Error al crear el pedido. Intenta de nuevo.')
     } finally {
       setLoading(false)
     }
   }
 
-  const totalPares = items.reduce((s, i) => s + i.cantidad, 0)
-
-  function Field({ label, field, placeholder, type = 'text', half = false }) {
-    return (
-      <div className={half ? 'col-span-1' : 'col-span-2'}>
-        <label className="block text-sm font-medium text-[#1C1C1E] mb-1.5">
-          {label} <span className="text-[#C0392B]">*</span>
-        </label>
-        <input
-          type={type}
-          value={form[field]}
-          onChange={e => set(field, e.target.value)}
-          placeholder={placeholder}
-          className={`w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none transition-colors
-            ${errors[field] ? 'border-[#C0392B] focus:border-[#C0392B]' : 'border-gray-200 focus:border-[#C0392B]'}`}
-        />
-        {errors[field] && <p className="text-xs text-[#C0392B] mt-1">{errors[field]}</p>}
-      </div>
-    )
-  }
+  const totalPares   = cartItems.reduce((s, i) => s + i.cantidad, 0)
+  const descuento    = calcularDescuento(subtotal, totalPares, reglas)
+  const totalMostrar = descuento ? Math.round(descuento.totalNeto) : subtotal
+  const municipiosDepto = form.departamento ? (MUNICIPIOS_POR_DEP[form.departamento] || []) : []
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
@@ -112,36 +194,81 @@ export default function Checkout() {
         {/* Formulario */}
         <div className="lg:col-span-2">
           <div className="bg-white border border-gray-100 rounded-2xl p-6">
-            <h2 className="font-semibold text-[#1C1C1E] mb-5">Datos para la entrega</h2>
+            <h2 className="font-semibold text-[#1C1C1E] mb-5">Datos personales</h2>
 
             <div className="grid grid-cols-2 gap-4">
-              <Field label="Nombre completo" field="compradorNombre" placeholder="Juan" half />
-              <Field label="Apellido" field="compradorApellido" placeholder="Pérez" half />
-              <Field label="Cédula" field="compradorCedula" placeholder="1234567890" half />
-              <Field label="Teléfono" field="compradorTelefono" placeholder="+57 300 000 0000" half />
-              <Field label="Correo electrónico" field="compradorEmail" placeholder="correo@ejemplo.com" type="email" />
+              <Field label="Nombre" placeholder="Juan" half
+                value={form.compradorNombre} error={errors.compradorNombre}
+                onChange={e => set('compradorNombre', e.target.value)} />
+              <Field label="Apellido" placeholder="Pérez" half
+                value={form.compradorApellido} error={errors.compradorApellido}
+                onChange={e => set('compradorApellido', e.target.value)} />
+              <Field label="Cédula" placeholder="1234567890" half
+                value={form.compradorCedula} error={errors.compradorCedula}
+                onChange={e => set('compradorCedula', e.target.value)} />
+              <Field label="Teléfono" placeholder="+57 300 000 0000" half
+                value={form.compradorTelefono} error={errors.compradorTelefono}
+                onChange={e => set('compradorTelefono', e.target.value)} />
+              <Field label="Correo electrónico" placeholder="correo@ejemplo.com" type="email"
+                value={form.compradorEmail} error={errors.compradorEmail}
+                onChange={e => set('compradorEmail', e.target.value)} />
+            </div>
 
-              {/* Modalidad */}
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-[#1C1C1E] mb-2">Modalidad de entrega</label>
-                <div className="flex gap-3">
-                  {[{ v: 'DOMICILIO', label: '🚚 Domicilio' }, { v: 'OFICINA', label: '🏪 Retiro en oficina' }].map(opt => (
-                    <button
-                      key={opt.v}
-                      type="button"
-                      onClick={() => set('modalidadEntrega', opt.v)}
-                      className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition-all
-                        ${form.modalidadEntrega === opt.v ? 'bg-[#C0392B] text-white border-[#C0392B]' : 'bg-white text-gray-600 border-gray-200 hover:border-[#C0392B]'}`}
-                    >{opt.label}</button>
-                  ))}
-                </div>
+            <h2 className="font-semibold text-[#1C1C1E] mt-6 mb-5">Datos de entrega</h2>
+
+            {/* Modalidad */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-[#1C1C1E] mb-2">Modalidad de entrega</label>
+              <div className="flex gap-3">
+                {[{ v: 'DOMICILIO', label: '🚚 Domicilio' }, { v: 'OFICINA', label: '🏪 Retiro en oficina' }].map(opt => (
+                  <button key={opt.v} type="button"
+                    onClick={() => set('modalidadEntrega', opt.v)}
+                    className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition-all
+                      ${form.modalidadEntrega === opt.v ? 'bg-[#C0392B] text-white border-[#C0392B]' : 'bg-white text-gray-600 border-gray-200 hover:border-[#C0392B]'}`}
+                  >{opt.label}</button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* Departamento combobox — siempre visible */}
+              <div>
+                <label className="block text-sm font-medium text-[#1C1C1E] mb-1.5">
+                  Departamento <span className="text-[#C0392B]">*</span>
+                </label>
+                <Combobox
+                  options={DEPARTAMENTOS}
+                  value={form.departamento}
+                  onChange={setDepartamento}
+                  placeholder="Ej. Cundinamarca"
+                />
+                {errors.departamento && <p className="text-xs text-[#C0392B] mt-1">{errors.departamento}</p>}
               </div>
 
+              {/* Municipio combobox — siempre visible */}
+              <div>
+                <label className="block text-sm font-medium text-[#1C1C1E] mb-1.5">
+                  Municipio <span className="text-[#C0392B]">*</span>
+                </label>
+                <Combobox
+                  options={municipiosDepto}
+                  value={form.municipio}
+                  onChange={v => set('municipio', v)}
+                  placeholder={form.departamento ? 'Ej. Bogotá' : 'Selecciona un departamento primero'}
+                  disabled={!form.departamento}
+                />
+                {errors.municipio && <p className="text-xs text-[#C0392B] mt-1">{errors.municipio}</p>}
+              </div>
+
+              {/* Dirección y barrio — solo para DOMICILIO */}
               {form.modalidadEntrega === 'DOMICILIO' && (
                 <>
-                  <Field label="Dirección de entrega" field="direccionEnvio" placeholder="Calle 0 # 00-00, Barrio..." />
-                  <Field label="Municipio" field="municipio" placeholder="Cúcuta" half />
-                  <Field label="Departamento" field="departamento" placeholder="Norte de Santander" half />
+                  <Field label="Dirección exacta" placeholder="Calle 0 # 00-00"
+                    value={form.direccionEnvio} error={errors.direccionEnvio}
+                    onChange={e => set('direccionEnvio', e.target.value)} />
+                  <Field label="Barrio" placeholder="Ej. La Merced" half required={false}
+                    value={form.barrio} error={errors.barrio}
+                    onChange={e => set('barrio', e.target.value)} />
                 </>
               )}
             </div>
@@ -160,8 +287,9 @@ export default function Checkout() {
         <div className="lg:col-span-1">
           <div className="bg-[#F5F5F5] rounded-2xl p-5 sticky top-20">
             <h2 className="font-bold text-[#1C1C1E] mb-4">Resumen</h2>
+
             <div className="space-y-3 mb-4">
-              {items.map(item => (
+              {cartItems.map(item => (
                 <div key={item.key} className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg overflow-hidden bg-white flex-shrink-0">
                     {item.product.imagenUrl
@@ -185,15 +313,30 @@ export default function Checkout() {
                 <span className="text-gray-500">Subtotal ({totalPares} pares)</span>
                 <span className="font-medium">${formatCOP(subtotal)}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-[#C0392B]">Descuento por volumen</span>
-                <span className="text-[#C0392B] font-medium">Se calcula automáticamente</span>
-              </div>
-              <div className="flex justify-between font-bold text-[#1C1C1E] pt-1">
-                <span>Total aprox.</span>
-                <span>${formatCOP(subtotal)} COP</span>
+              {descuento ? (
+                <div className="flex justify-between text-sm" style={{ color: '#C0392B' }}>
+                  <span>Descuento mayorista</span>
+                  <span className="font-medium">−${formatCOP(Math.round(descuento.ahorro))}</span>
+                </div>
+              ) : (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Descuento por volumen</span>
+                  <span className="text-gray-400 text-xs">Sin descuento aún</span>
+                </div>
+              )}
+              <div className="flex justify-between font-bold text-[#1C1C1E] pt-1 border-t border-gray-200">
+                <span>Total</span>
+                <span style={{ color: descuento ? '#C0392B' : '#1C1C1E' }}>
+                  ${formatCOP(totalMostrar)} COP
+                </span>
               </div>
             </div>
+
+            {descuento && (
+              <div className="mb-4 rounded-xl px-4 py-3 text-sm font-semibold" style={{ backgroundColor: '#FEF2F1', color: '#C0392B' }}>
+                ¡Ahorrarás ${formatCOP(Math.round(descuento.ahorro))} COP con el precio con DESCUENTO!
+              </div>
+            )}
 
             <button
               type="submit"

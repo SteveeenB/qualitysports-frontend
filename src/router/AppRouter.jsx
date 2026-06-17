@@ -25,6 +25,7 @@ import AdminPedidos    from '../pages/admin/AdminPedidos'
 import AdminClientes   from '../pages/admin/AdminClientes'
 import AdminAsesores   from '../pages/admin/AdminAsesores'
 import AdminDescuentos from '../pages/admin/AdminDescuentos'
+import AdminModelos    from '../pages/admin/AdminModelos'
 
 import Acceso403 from '../pages/Acceso403'
 
@@ -77,6 +78,7 @@ export default function AppRouter() {
           <Route path="/admin/pedidos"     element={<AdminPedidos />} />
           <Route path="/admin/clientes"    element={<AdminClientes />} />
           <Route path="/admin/asesores"    element={<AdminAsesores />} />
+          <Route path="/admin/modelos"     element={<AdminModelos />} />
           <Route path="/admin/descuentos"  element={<AdminDescuentos />} />
         </Route>
 

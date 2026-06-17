@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import Cropper from 'react-easy-crop'
 import {
-  listarProductosAdmin, listarCategorias,
+  listarProductosAdmin, listarModelos,
   crearProducto, actualizarProducto, cambiarEstadoProducto,
   subirImagenProducto,
 } from '../../api/productos'
@@ -12,9 +12,9 @@ const COP = n => '$' + new Intl.NumberFormat('es-CO').format(n ?? 0)
 const TALLAS = [34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45]
 const DEFAULT_TALLAS = [34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44]
 
-const EMPTY_FORM = { nombre: '', descripcion: '', precioBase: '', imagenUrl: '', categoriaId: '', tallas: DEFAULT_TALLAS }
+const EMPTY_FORM = { nombre: '', descripcion: '', precioBase: '', imagenUrl: '', modeloId: '', tallas: DEFAULT_TALLAS }
 
-function ProductoModal({ open, onClose, editing, categorias, onSaved }) {
+function ProductoModal({ open, onClose, editing, modelos, onSaved }) {
   const [form, setForm]             = useState(EMPTY_FORM)
   const [saving, setSaving]         = useState(false)
   const [error, setError]           = useState('')
@@ -35,7 +35,7 @@ function ProductoModal({ open, onClose, editing, categorias, onSaved }) {
         descripcion: editing.descripcion ?? '',
         precioBase:  editing.precioBase ?? '',
         imagenUrl:   editing.imagenUrl ?? '',
-        categoriaId: editing.categoria?.id ?? '',
+        modeloId:    editing.modelo?.id ?? '',
         tallas:      [...(editing.tallasDisponibles ?? [])],
       })
     } else {
@@ -112,7 +112,7 @@ function ProductoModal({ open, onClose, editing, categorias, onSaved }) {
       descripcion:       form.descripcion.trim() || null,
       precioBase:        Number(form.precioBase),
       imagenUrl:         selectedFile ? null : (form.imagenUrl.trim() || null),
-      categoriaId:       form.categoriaId ? Number(form.categoriaId) : null,
+      modeloId:          form.modeloId ? Number(form.modeloId) : null,
       tallasDisponibles: form.tallas,
     }
     try {
@@ -215,18 +215,18 @@ function ProductoModal({ open, onClose, editing, categorias, onSaved }) {
             />
           </div>
 
-          {/* Categoría + Precio */}
+          {/* Modelo + Precio */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Categoría</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Modelo</label>
               <select
-                value={form.categoriaId} onChange={e => setForm(f => ({ ...f, categoriaId: e.target.value }))}
+                value={form.modeloId} onChange={e => setForm(f => ({ ...f, modeloId: e.target.value }))}
                 className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-gray-200 focus:outline-none bg-white"
                 onFocus={e => e.target.style.borderColor = '#C0392B'}
                 onBlur={e => e.target.style.borderColor = '#E5E7EB'}
               >
-                <option value="">Sin categoría</option>
-                {categorias.map(c => <option key={c.id} value={c.id}>{c.nombreCategoria}</option>)}
+                <option value="">Sin modelo</option>
+                {modelos.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
               </select>
             </div>
             <div>
@@ -375,9 +375,9 @@ function ProductoModal({ open, onClose, editing, categorias, onSaved }) {
 }
 
 export default function AdminProductos() {
-  const [productos, setProductos]   = useState([])
-  const [categorias, setCategorias] = useState([])
-  const [loading, setLoading]       = useState(true)
+  const [productos, setProductos] = useState([])
+  const [modelos, setModelos]     = useState([])
+  const [loading, setLoading]     = useState(true)
   const [query, setQuery]           = useState('')
   const [page, setPage]             = useState(0)
   const [totalPages, setTotalPages] = useState(1)
@@ -396,7 +396,7 @@ export default function AdminProductos() {
 
   useEffect(() => {
     fetchProductos(page)
-    listarCategorias().then(r => setCategorias(r.data)).catch(() => {})
+    listarModelos().then(r => setModelos(r.data)).catch(() => {})
   }, [page])
 
   function openCreate() { setEditing(null); setModalOpen(true) }
@@ -540,7 +540,7 @@ export default function AdminProductos() {
         open={modalOpen}
         onClose={closeModal}
         editing={editing}
-        categorias={categorias}
+        modelos={modelos}
         onSaved={onSaved}
       />
     </div>

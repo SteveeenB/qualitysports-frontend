@@ -1,30 +1,62 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { listarProductos, buscarProductos, listarCategorias } from '../../api/productos'
+import { motion } from 'framer-motion'
+import { listarProductos, listarProductosPorModelo, buscarProductos, listarModelos } from '../../api/productos'
+import { toCollageUrl } from '../../utils/imageUrl'
 import ProductCard from '../../components/ui/ProductCard'
 import Spinner from '../../components/ui/Spinner'
 import EmptyState from '../../components/ui/EmptyState'
 
 const GRID_KEY = 'qs_catalog_cols'
 
+function ModeloCard({ modelo, isSelected, onSelect }) {
+  return (
+    <motion.button
+      onClick={onSelect}
+      whileHover={{ scale: 1.04 }}
+      whileTap={{ scale: 0.97 }}
+      className="flex items-center gap-2.5 px-3 py-2 rounded-xl border transition-colors flex-shrink-0"
+      style={{
+        backgroundColor: isSelected ? '#FEF2F1' : '#FFFFFF',
+        borderColor: isSelected ? '#C0392B' : '#E5E5E5',
+      }}
+    >
+      {modelo.imagenRepresentativa && (
+        <img
+          src={toCollageUrl(modelo.imagenRepresentativa)}
+          alt={modelo.nombre}
+          loading="lazy"
+          className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
+        />
+      )}
+      <span
+        className="text-sm font-medium whitespace-nowrap"
+        style={{ color: isSelected ? '#C0392B' : '#1C1C1E' }}
+      >
+        {modelo.nombre}
+      </span>
+    </motion.button>
+  )
+}
+
 export default function Catalogo() {
-  const [products, setProducts]     = useState([])
-  const [categorias, setCategorias] = useState([])
-  const [loading, setLoading]       = useState(true)
-  const [error, setError]           = useState(false)
-  const [query, setQuery]           = useState('')
-  const [catId, setCatId]           = useState(null)
-  const [page, setPage]             = useState(0)
+  const [products, setProducts] = useState([])
+  const [modelos, setModelos]   = useState([])
+  const [loading, setLoading]   = useState(true)
+  const [error, setError]       = useState(false)
+  const [query, setQuery]       = useState('')
+  const [modeloId, setModeloId] = useState(null)
+  const [page, setPage]         = useState(0)
   const [totalPages, setTotalPages] = useState(1)
   const [mobileCols, setMobileCols] = useState(() => parseInt(localStorage.getItem(GRID_KEY) ?? '2'))
   const debounceRef = useRef(null)
 
   useEffect(() => {
-    listarCategorias()
-      .then(r => setCategorias(r.data))
+    listarModelos()
+      .then(r => setModelos(r.data))
       .catch(() => {})
   }, [])
 
-  const fetchProducts = useCallback(async (q, cat, p) => {
+  const fetchProducts = useCallback(async (q, mId, p) => {
     setLoading(true)
     setError(false)
     try {
@@ -33,6 +65,11 @@ export default function Catalogo() {
         res = await buscarProductos(q)
         const data = res.data
         setProducts(Array.isArray(data) ? data : data.content ?? [])
+        setTotalPages(data.totalPages ?? 1)
+      } else if (mId) {
+        res = await listarProductosPorModelo(mId, p, 9)
+        const data = res.data
+        setProducts(data.content ?? [])
         setTotalPages(data.totalPages ?? 1)
       } else {
         res = await listarProductos(p, 9)
@@ -50,25 +87,26 @@ export default function Catalogo() {
   useEffect(() => {
     clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
-      fetchProducts(query, catId, 0)
+      fetchProducts(query, modeloId, 0)
       setPage(0)
     }, 300)
     return () => clearTimeout(debounceRef.current)
-  }, [query, catId, fetchProducts])
+  }, [query, modeloId, fetchProducts])
 
   useEffect(() => {
-    if (!query.trim()) fetchProducts('', catId, page)
+    if (!query.trim()) fetchProducts('', modeloId, page)
   }, [page])
+
+  function selectModelo(id) {
+    setModeloId(id)
+    setPage(0)
+  }
 
   function toggleMobileCols() {
     const next = mobileCols === 1 ? 2 : 1
     setMobileCols(next)
     localStorage.setItem(GRID_KEY, String(next))
   }
-
-  const filtered = catId
-    ? products.filter(p => p.categoria?.id === catId)
-    : products
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#FAFAFA' }}>
@@ -85,7 +123,7 @@ export default function Catalogo() {
               </h1>
             </div>
             <p className="text-sm text-gray-400 hidden md:block">
-              {loading ? '' : `${filtered.length} producto${filtered.length !== 1 ? 's' : ''}`}
+              {loading ? '' : `${products.length} producto${products.length !== 1 ? 's' : ''}`}
             </p>
           </div>
         </div>
@@ -108,10 +146,7 @@ export default function Catalogo() {
               onChange={e => setQuery(e.target.value)}
               placeholder="Buscar por modelo o número..."
               className="w-full pl-10 pr-4 py-2.5 text-sm bg-white transition-colors focus:outline-none"
-              style={{
-                border: '1px solid #E5E5E5',
-                borderRadius: '12px',
-              }}
+              style={{ border: '1px solid #E5E5E5', borderRadius: '12px' }}
               onFocus={e => e.target.style.borderColor = '#C0392B'}
               onBlur={e => e.target.style.borderColor = '#E5E5E5'}
             />
@@ -137,39 +172,38 @@ export default function Catalogo() {
           </button>
         </div>
 
-        {/* Category chips */}
-        <div className="flex flex-wrap gap-2 mb-8">
-          <button
-            onClick={() => setCatId(null)}
-            className="px-4 py-1.5 rounded-full text-sm font-medium transition-all"
-            style={{
-              backgroundColor: catId === null ? '#C0392B' : '#FFFFFF',
-              color: catId === null ? '#FFFFFF' : '#4B5563',
-              border: catId === null ? '1px solid #C0392B' : '1px solid #E5E5E5',
-            }}
-          >
-            Todos
-          </button>
-          {categorias.map(c => (
-            <button
-              key={c.id}
-              onClick={() => setCatId(c.id)}
-              className="px-4 py-1.5 rounded-full text-sm font-medium transition-all"
+        {/* Model filter — horizontal scroll on mobile, wrap on desktop */}
+        {modelos.length > 0 && (
+          <div className="flex gap-2 mb-8 overflow-x-auto pb-1 -mx-1 px-1"
+               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <motion.button
+              onClick={() => selectModelo(null)}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.97 }}
+              className="px-4 py-2 rounded-xl border text-sm font-medium transition-colors flex-shrink-0"
               style={{
-                backgroundColor: catId === c.id ? '#C0392B' : '#FFFFFF',
-                color: catId === c.id ? '#FFFFFF' : '#4B5563',
-                border: catId === c.id ? '1px solid #C0392B' : '1px solid #E5E5E5',
+                backgroundColor: modeloId === null ? '#C0392B' : '#FFFFFF',
+                color: modeloId === null ? '#FFFFFF' : '#4B5563',
+                borderColor: modeloId === null ? '#C0392B' : '#E5E5E5',
               }}
             >
-              {c.nombreCategoria}
-            </button>
-          ))}
-        </div>
+              Todos
+            </motion.button>
+            {modelos.map(m => (
+              <ModeloCard
+                key={m.id}
+                modelo={m}
+                isSelected={modeloId === m.id}
+                onSelect={() => selectModelo(m.id)}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Mobile product count */}
         {!loading && (
           <p className="md:hidden text-xs text-gray-400 mb-4">
-            {filtered.length} producto{filtered.length !== 1 ? 's' : ''}
+            {products.length} producto{products.length !== 1 ? 's' : ''}
           </p>
         )}
 
@@ -181,18 +215,18 @@ export default function Catalogo() {
             icon="⚠️"
             title="Error de conexión"
             description="No pudimos cargar los productos. Verifica tu conexión."
-            action={{ label: 'Reintentar', onClick: () => fetchProducts(query, catId, page) }}
+            action={{ label: 'Reintentar', onClick: () => fetchProducts(query, modeloId, page) }}
           />
-        ) : filtered.length === 0 ? (
+        ) : products.length === 0 ? (
           <EmptyState
             icon="📦"
             title="Sin resultados"
-            description={query ? `No encontramos productos para "${query}".` : 'No hay productos en esta categoría.'}
-            action={{ label: 'Ver todos', onClick: () => { setQuery(''); setCatId(null) } }}
+            description={query ? `No encontramos productos para "${query}".` : 'No hay productos en este modelo.'}
+            action={{ label: 'Ver todos', onClick: () => { setQuery(''); selectModelo(null) } }}
           />
         ) : (
           <div className={`grid gap-4 ${mobileCols === 1 ? 'grid-cols-1' : 'grid-cols-2'} md:grid-cols-3`}>
-            {filtered.map(p => <ProductCard key={p.id} product={p} />)}
+            {products.map(p => <ProductCard key={p.id} product={p} />)}
           </div>
         )}
 

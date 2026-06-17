@@ -1,7 +1,8 @@
 import api from './client'
 
 // ── Público (sin token) ───────────────────────────────────────────────────────
-export const crearPedido = (data) => api.post('/api/pedidos', data)
+export const crearPedido      = (data) => api.post('/api/pedidos', data)
+export const listarDescuentos = ()     => api.get('/api/descuentos')
 
 // ── Cliente autenticado ───────────────────────────────────────────────────────
 export const misPedidos = ()   => api.get('/api/pedidos/mis-pedidos')

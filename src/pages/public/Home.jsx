@@ -4,10 +4,7 @@ import { motion } from 'framer-motion'
 import { listarProductos } from '../../api/productos'
 import ProductCard from '../../components/ui/ProductCard'
 import Spinner from '../../components/ui/Spinner'
-
-function formatCOP(n) {
-  return new Intl.NumberFormat('es-CO').format(n)
-}
+import { toCollageUrl } from '../../utils/imageUrl'
 
 const PASOS = [
   {
@@ -55,11 +52,6 @@ function CollageColumn({ images, direction, speed, left }) {
       </motion.div>
     </div>
   )
-}
-
-function toCollageUrl(url) {
-  if (!url) return url
-  return url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?width=300&quality=65'
 }
 
 export default function Home() {
@@ -140,7 +132,7 @@ export default function Home() {
               </h1>
 
               <p className="text-gray-400 text-base md:text-lg mb-8 leading-relaxed max-w-sm">
-                Compra al por mayor o detalle. Pago contraentrega, atención personalizada por WhatsApp.
+                Compra al por mayor o detal. Pago contraentrega, atención personalizada por WhatsApp.
               </p>
 
               <div className="flex flex-wrap gap-3">

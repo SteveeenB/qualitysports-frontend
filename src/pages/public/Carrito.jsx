@@ -1,14 +1,37 @@
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
+import { listarDescuentos } from '../../api/pedidos'
 import EmptyState from '../../components/ui/EmptyState'
 
 function formatCOP(n) {
   return new Intl.NumberFormat('es-CO').format(n)
 }
 
+function calcularDescuento(subtotal, totalPares, reglas) {
+  if (!reglas || reglas.length === 0) return null
+  const regla = [...reglas]
+    .sort((a, b) => b.cantidadPares - a.cantidadPares)
+    .find(r => r.cantidadPares <= totalPares)
+  if (!regla) return null
+  const precioPorPar = regla.precioTotalPaquete / regla.cantidadPares
+  const totalNeto = precioPorPar * totalPares
+  const ahorro = subtotal - totalNeto
+  if (ahorro <= 0) return null
+  return { totalNeto, ahorro, precioPorPar }
+}
+
 export default function Carrito() {
   const { items, updateCantidad, removeItem, subtotal, totalItems } = useCart()
   const navigate = useNavigate()
+  const [reglas, setReglas] = useState([])
+
+  useEffect(() => {
+    listarDescuentos().then(r => setReglas(r.data)).catch(() => {})
+  }, [])
+
+  const totalPares = items.reduce((s, i) => s + i.cantidad, 0)
+  const descuento  = calcularDescuento(subtotal, totalPares, reglas)
 
   if (items.length === 0) {
     return (
@@ -71,21 +94,47 @@ export default function Carrito() {
           <div className="bg-[#F5F5F5] rounded-2xl p-6 sticky top-20">
             <h2 className="font-bold text-[#1C1C1E] mb-5">Resumen del pedido</h2>
 
+            {/* Banner de ahorro */}
+            {descuento && (
+              <div className="mb-5 rounded-xl p-4" style={{ backgroundColor: '#FEF2F1', border: '1px solid #FECACA' }}>
+                <p className="text-sm font-bold mb-1" style={{ color: '#C0392B' }}>
+                  ¡Ahorrarás ${formatCOP(Math.round(descuento.ahorro))} COP con el precio con DESCUENTO!
+                </p>
+                <p className="text-xs text-gray-500">Precio mayorista: ${formatCOP(Math.round(descuento.precioPorPar))} por par</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-xs text-gray-400 line-through">${formatCOP(subtotal)} COP</span>
+                  <span className="text-sm font-bold" style={{ color: '#C0392B' }}>
+                    ${formatCOP(Math.round(descuento.totalNeto))} COP
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-3 mb-5">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">{totalItems} {totalItems === 1 ? 'par' : 'pares'}</span>
                 <span className="font-medium">${formatCOP(subtotal)} COP</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Descuento</span>
-                <span className="text-[#C0392B] font-medium">Se calcula en checkout</span>
-              </div>
+              {descuento ? (
+                <div className="flex justify-between text-sm">
+                  <span style={{ color: '#C0392B' }}>Descuento mayorista</span>
+                  <span className="font-medium" style={{ color: '#C0392B' }}>
+                    −${formatCOP(Math.round(descuento.ahorro))} COP
+                  </span>
+                </div>
+              ) : (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400 text-xs">Descuento por volumen desde {reglas.length > 0 ? reglas[0].cantidadPares : '—'} pares</span>
+                </div>
+              )}
             </div>
 
             <div className="border-t border-gray-200 pt-4 mb-5">
               <div className="flex justify-between">
-                <span className="font-bold text-[#1C1C1E]">Subtotal</span>
-                <span className="font-bold text-[#1C1C1E] text-lg">${formatCOP(subtotal)} COP</span>
+                <span className="font-bold text-[#1C1C1E]">{descuento ? 'Total con descuento' : 'Subtotal'}</span>
+                <span className="font-bold text-lg" style={{ color: descuento ? '#C0392B' : '#1C1C1E' }}>
+                  ${formatCOP(Math.round(descuento ? descuento.totalNeto : subtotal))} COP
+                </span>
               </div>
             </div>
 
