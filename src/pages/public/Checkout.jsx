@@ -315,7 +315,7 @@ export default function Checkout() {
               </div>
               {descuento ? (
                 <div className="flex justify-between text-sm" style={{ color: '#C0392B' }}>
-                  <span>Descuento mayorista</span>
+                  <span>Descuento</span>
                   <span className="font-medium">−${formatCOP(Math.round(descuento.ahorro))}</span>
                 </div>
               ) : (
