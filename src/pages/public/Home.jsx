@@ -131,9 +131,22 @@ export default function Home() {
                 <span style={{ color: '#C0392B' }}>de alta calidad</span>
               </h1>
 
-              <p className="text-gray-400 text-base md:text-lg mb-8 leading-relaxed max-w-sm">
+              <p className="text-gray-400 text-base md:text-lg mb-6 leading-relaxed max-w-sm">
                 Compra al por mayor o detal. Pago contraentrega, atención personalizada por WhatsApp.
               </p>
+
+              {/* Promo 2 pares */}
+              <div
+                className="inline-flex items-center gap-3 px-4 py-3 rounded-2xl mb-7"
+                style={{ backgroundColor: 'rgba(192,57,43,0.15)', border: '1px solid rgba(192,57,43,0.35)' }}
+              >
+                <div className="flex flex-col leading-none">
+                  <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.5)' }}>Oferta especial</span>
+                  <span className="text-white font-black text-lg leading-tight mt-0.5">2 pares · $190.000</span>
+                </div>
+                <div className="h-8 w-px" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }} />
+                <span className="text-xs text-gray-300 max-w-[110px] leading-tight">Mezcla modelos libremente</span>
+              </div>
 
               <div className="flex flex-wrap gap-3">
                 <Link
@@ -266,24 +279,32 @@ export default function Home() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { pares: 2, precio: '190.000' },
-              { pares: 3, precio: '280.000' },
-              { pares: 4, precio: '360.000' },
-              { pares: 5, precio: '450.000' },
+              { pares: 2, precio: '190.000', tag: '¡Empieza aquí!' },
+              { pares: 3, precio: '280.000', tag: null },
+              { pares: 4, precio: '360.000', tag: null },
+              { pares: 5, precio: '450.000', tag: null },
             ].map((t, i) => (
               <div
                 key={t.pares}
-                className="rounded-2xl p-5"
+                className="relative rounded-2xl p-5"
                 style={{
-                  backgroundColor: i === 3 ? '#C0392B' : 'rgba(255,255,255,0.05)',
-                  border: i === 3 ? 'none' : '1px solid rgba(255,255,255,0.08)',
+                  backgroundColor: i === 0 ? '#C0392B' : 'rgba(255,255,255,0.05)',
+                  border: i === 0 ? 'none' : '1px solid rgba(255,255,255,0.08)',
                 }}
               >
-                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: i === 3 ? 'rgba(255,255,255,0.6)' : '#6B7280' }}>
+                {t.tag && (
+                  <span
+                    className="absolute -top-2.5 left-4 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                    style={{ backgroundColor: '#FFFFFF', color: '#C0392B' }}
+                  >
+                    {t.tag}
+                  </span>
+                )}
+                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: i === 0 ? 'rgba(255,255,255,0.75)' : '#6B7280' }}>
                   {t.pares} pares
                 </p>
                 <p className="text-xl font-black text-white mt-2">${t.precio}</p>
-                <p className="text-xs mt-1" style={{ color: i === 3 ? 'rgba(255,255,255,0.5)' : '#4B5563' }}>
+                <p className="text-xs mt-1" style={{ color: i === 0 ? 'rgba(255,255,255,0.65)' : '#4B5563' }}>
                   COP total
                 </p>
               </div>

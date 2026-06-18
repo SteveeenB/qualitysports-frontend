@@ -249,7 +249,7 @@ export default function AdminPedidos() {
   })
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="mb-6">
         <h1 className="text-2xl font-bold" style={{ color: '#1C1C1E' }}>Gestión de Pedidos</h1>
         <p className="text-sm text-gray-400 mt-0.5">Reasigna asesores y supervisa el estado</p>
@@ -273,41 +273,73 @@ export default function AdminPedidos() {
         {loading ? (
           <div className="flex justify-center py-16"><Spinner size="lg" /></div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  {['ID', 'CLIENTE', 'PRODUCTOS', 'FECHA', 'ASESOR ASIGNADO', 'TOTAL', 'ESTADO', ''].map(h => (
-                    <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(p => (
-                  <tr key={p.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
-                    <td className="px-5 py-3.5 font-mono text-xs text-gray-500">#QS-2026-{String(p.id).padStart(4,'0')}</td>
-                    <td className="px-5 py-3.5 font-medium text-gray-800">{p.compradorNombre} {p.compradorApellido}</td>
-                    <td className="px-5 py-3.5 text-gray-500">{p.detalles?.length ?? 0} items</td>
-                    <td className="px-5 py-3.5 text-gray-500">{formatFecha(p.fecha)}</td>
-                    <td className="px-5 py-3.5 text-gray-600">{p.asesorNombre ?? '—'}</td>
-                    <td className="px-5 py-3.5 font-semibold text-gray-800">{COP(p.totalNeto)}</td>
-                    <td className="px-5 py-3.5"><Badge estado={p.estadoActual} /></td>
-                    <td className="px-5 py-3.5">
-                      <button onClick={() => setSelected(p)} className="text-gray-400 hover:text-gray-700 transition-colors" title="Ver detalle">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                          <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                      </button>
-                    </td>
+          <>
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    {['ID', 'CLIENTE', 'PRODUCTOS', 'FECHA', 'ASESOR ASIGNADO', 'TOTAL', 'ESTADO', ''].map(h => (
+                      <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{h}</th>
+                    ))}
                   </tr>
-                ))}
-                {filtered.length === 0 && (
-                  <tr><td colSpan={8} className="px-5 py-12 text-center text-gray-400">No hay pedidos</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filtered.map(p => (
+                    <tr key={p.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
+                      <td className="px-5 py-3.5 font-mono text-xs text-gray-500">#QS-2026-{String(p.id).padStart(4,'0')}</td>
+                      <td className="px-5 py-3.5 font-medium text-gray-800">{p.compradorNombre} {p.compradorApellido}</td>
+                      <td className="px-5 py-3.5 text-gray-500">{p.detalles?.length ?? 0} items</td>
+                      <td className="px-5 py-3.5 text-gray-500">{formatFecha(p.fecha)}</td>
+                      <td className="px-5 py-3.5 text-gray-600">{p.asesorNombre ?? '—'}</td>
+                      <td className="px-5 py-3.5 font-semibold text-gray-800">{COP(p.totalNeto)}</td>
+                      <td className="px-5 py-3.5"><Badge estado={p.estadoActual} /></td>
+                      <td className="px-5 py-3.5">
+                        <button onClick={() => setSelected(p)} className="text-gray-400 hover:text-gray-700 transition-colors" title="Ver detalle">
+                          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {filtered.length === 0 && (
+                    <tr><td colSpan={8} className="px-5 py-12 text-center text-gray-400">No hay pedidos</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            {/* Mobile cards */}
+            <div className="md:hidden divide-y divide-gray-50">
+              {filtered.length === 0 ? (
+                <p className="px-4 py-10 text-center text-sm text-gray-400">No hay pedidos</p>
+              ) : filtered.map(p => (
+                <div key={p.id} className="p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-semibold text-gray-800 text-sm">{p.compradorNombre} {p.compradorApellido}</p>
+                      <p className="text-xs font-mono text-gray-400 mt-0.5">#QS-2026-{String(p.id).padStart(4,'0')}</p>
+                    </div>
+                    <Badge estado={p.estadoActual} />
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400 text-xs">{formatFecha(p.fecha)}</span>
+                    <span className="font-bold" style={{ color: '#C0392B' }}>{COP(p.totalNeto)}</span>
+                  </div>
+                  {p.asesorNombre && (
+                    <p className="text-xs text-gray-400">Asesor: {p.asesorNombre}</p>
+                  )}
+                  <button
+                    onClick={() => setSelected(p)}
+                    className="w-full mt-1 py-2 text-xs font-medium border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                  >
+                    Ver detalle
+                  </button>
+                </div>
+              ))}
+            </div>
+          </>
         )}
         <div className="px-5 py-3 border-t border-gray-50">
           <p className="text-xs text-gray-400">La reasignación de asesor está bloqueada cuando el pedido está "En despacho" o "Entregado".</p>

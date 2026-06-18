@@ -68,7 +68,7 @@ export default function AdminModelos() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -101,7 +101,9 @@ export default function AdminModelos() {
             </button>
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <>
+          {/* Desktop table */}
+          <table className="hidden md:table w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100">
                 {['MODELO', 'FOTO REPRESENTATIVA', 'ACCIONES'].map(h => (
@@ -112,9 +114,7 @@ export default function AdminModelos() {
             <tbody>
               {modelos.map(m => (
                 <tr key={m.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <span className="font-semibold text-gray-800">{m.nombre}</span>
-                  </td>
+                  <td className="px-6 py-4"><span className="font-semibold text-gray-800">{m.nombre}</span></td>
                   <td className="px-6 py-4">
                     {m.imagenRepresentativa ? (
                       <img src={m.imagenRepresentativa} alt={m.nombre} className="w-12 h-12 rounded-lg object-cover" />
@@ -124,24 +124,34 @@ export default function AdminModelos() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => openEdit(m)}
-                        className="px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        onClick={() => { setDeleteId(m.id); setDeleteError('') }}
-                        className="px-3 py-1.5 text-xs font-medium border border-red-100 text-red-500 rounded-lg hover:bg-red-50 transition-colors"
-                      >
-                        Eliminar
-                      </button>
+                      <button onClick={() => openEdit(m)} className="px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Editar</button>
+                      <button onClick={() => { setDeleteId(m.id); setDeleteError('') }} className="px-3 py-1.5 text-xs font-medium border border-red-100 text-red-500 rounded-lg hover:bg-red-50 transition-colors">Eliminar</button>
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {/* Mobile cards */}
+          <div className="md:hidden divide-y divide-gray-50">
+            {modelos.map(m => (
+              <div key={m.id} className="p-4 flex items-center gap-4">
+                {m.imagenRepresentativa ? (
+                  <img src={m.imagenRepresentativa} alt={m.nombre} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                ) : (
+                  <div className="w-12 h-12 rounded-xl bg-gray-100 flex-shrink-0" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-gray-800 text-sm">{m.nombre}</p>
+                </div>
+                <div className="flex gap-2 flex-shrink-0">
+                  <button onClick={() => openEdit(m)} className="px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Editar</button>
+                  <button onClick={() => { setDeleteId(m.id); setDeleteError('') }} className="px-3 py-1.5 text-xs font-medium border border-red-100 text-red-500 rounded-lg hover:bg-red-50 transition-colors">Eliminar</button>
+                </div>
+              </div>
+            ))}
+          </div>
+          </>
         )}
       </div>
 

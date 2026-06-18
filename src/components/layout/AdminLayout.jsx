@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import Logo from '../ui/Logo'
 import { useAuth } from '../../context/AuthContext'
@@ -83,28 +84,49 @@ function getInitials(nombre = '') {
   return nombre.split(' ').slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('')
 }
 
-export default function AdminLayout() {
+function Sidebar({ open, onClose, location }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const location = useLocation()
 
   function handleLogout() {
     logout()
     navigate('/login')
+    onClose()
   }
 
-  const breadcrumb = BREADCRUMBS[location.pathname] ?? 'Admin'
-
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* ── Sidebar ── */}
+    <>
+      {/* Backdrop — mobile only */}
+      {open && (
+        <div
+          className="fixed inset-0 z-40 md:hidden"
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          onClick={onClose}
+        />
+      )}
+
       <aside
-        className="flex flex-col flex-shrink-0 w-[220px] h-full overflow-y-auto"
+        className={`
+          fixed md:static inset-y-0 left-0 z-50
+          flex flex-col flex-shrink-0 w-[220px] h-full overflow-y-auto
+          transition-transform duration-200 ease-in-out
+          ${open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        `}
         style={{ backgroundColor: '#1C1C1E' }}
       >
         {/* Logo */}
-        <div className="px-5 py-5 border-b flex-shrink-0" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+        <div className="px-5 py-5 border-b flex-shrink-0 flex items-center justify-between" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <Logo to="/" src="/logo.jpeg" variant="dark" />
+          {/* Cerrar en móvil */}
+          <button
+            onClick={onClose}
+            className="md:hidden w-7 h-7 flex items-center justify-center rounded-lg"
+            style={{ color: 'rgba(255,255,255,0.4)' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
         </div>
 
         {/* Nav */}
@@ -114,6 +136,7 @@ export default function AdminLayout() {
               key={item.to}
               to={item.to}
               end={item.end}
+              onClick={onClose}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
               style={({ isActive }) => ({
                 backgroundColor: isActive ? '#C0392B' : 'transparent',
@@ -155,24 +178,54 @@ export default function AdminLayout() {
           </button>
         </div>
       </aside>
+    </>
+  )
+}
+
+export default function AdminLayout() {
+  const { user } = useAuth()
+  const location = useLocation()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const breadcrumb = BREADCRUMBS[location.pathname] ?? 'Admin'
+
+  return (
+    <div className="flex h-screen overflow-hidden">
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} location={location} />
 
       {/* ── Main ── */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* Topbar */}
-        <header className="flex items-center justify-between px-8 h-16 flex-shrink-0 bg-white border-b border-gray-100">
-          <div className="flex items-center gap-2 text-sm text-gray-400">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
-              <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
-            </svg>
-            <span>Panel de control</span>
-            {breadcrumb !== 'Dashboard' && (
-              <>
-                <span className="text-gray-300">/</span>
-                <span className="text-gray-700 font-medium">{breadcrumb}</span>
-              </>
-            )}
+        <header className="flex items-center justify-between px-4 md:px-8 h-16 flex-shrink-0 bg-white border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            {/* Hamburger — mobile only */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-50 transition-colors"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/>
+              </svg>
+            </button>
+
+            <div className="flex items-center gap-2 text-sm text-gray-400">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="hidden sm:block">
+                <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+              </svg>
+              <span className="hidden sm:inline">Panel de control</span>
+              {breadcrumb !== 'Dashboard' && (
+                <>
+                  <span className="text-gray-300 hidden sm:inline">/</span>
+                  <span className="text-gray-700 font-medium">{breadcrumb}</span>
+                </>
+              )}
+              {breadcrumb === 'Dashboard' && (
+                <span className="text-gray-700 font-medium sm:hidden">{breadcrumb}</span>
+              )}
+            </div>
           </div>
+
           <div className="flex items-center gap-3">
             <div
               className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"

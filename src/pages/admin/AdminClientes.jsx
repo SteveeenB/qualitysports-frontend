@@ -215,7 +215,7 @@ export default function AdminClientes() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold" style={{ color: '#1C1C1E' }}>Clientes</h1>
@@ -253,7 +253,9 @@ export default function AdminClientes() {
         {loading ? (
           <div className="flex justify-center py-16"><Spinner size="lg" /></div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100">
@@ -267,10 +269,7 @@ export default function AdminClientes() {
                   <tr key={c.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-3.5">
                       <div className="flex items-center gap-3">
-                        <div
-                          className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                          style={{ backgroundColor: hashColor(c.nombre) }}
-                        >
+                        <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style={{ backgroundColor: hashColor(c.nombre) }}>
                           {getInitials(c.nombre)}
                         </div>
                         <div>
@@ -282,34 +281,16 @@ export default function AdminClientes() {
                     <td className="px-6 py-3.5 text-gray-600">{c.telefono ?? '—'}</td>
                     <td className="px-6 py-3.5 text-gray-500">{formatFecha(c.createdAt)}</td>
                     <td className="px-6 py-3.5">
-                      <span
-                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                        style={{ backgroundColor: c.activo ? '#DCFCE7' : '#F3F4F6', color: c.activo ? '#16A34A' : '#6B7280' }}
-                      >
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: c.activo ? '#DCFCE7' : '#F3F4F6', color: c.activo ? '#16A34A' : '#6B7280' }}>
                         {c.activo ? 'Activo' : 'Inactivo'}
                       </span>
                     </td>
                     <td className="px-6 py-3.5">
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setHistorialOf(c)}
-                          className="px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                        >
-                          Historial
-                        </button>
-                        <button
-                          onClick={() => setModalCliente(c)}
-                          className="px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                        >
-                          Editar
-                        </button>
+                        <button onClick={() => setHistorialOf(c)} className="px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Historial</button>
+                        <button onClick={() => setModalCliente(c)} className="px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Editar</button>
                         {c.activo && (
-                          <button
-                            onClick={() => { setDeactivateId(c.id); setDeactivateError('') }}
-                            className="px-3 py-1.5 text-xs font-medium border border-red-100 text-red-500 rounded-lg hover:bg-red-50 transition-colors"
-                          >
-                            Desactivar
-                          </button>
+                          <button onClick={() => { setDeactivateId(c.id); setDeactivateError('') }} className="px-3 py-1.5 text-xs font-medium border border-red-100 text-red-500 rounded-lg hover:bg-red-50 transition-colors">Desactivar</button>
                         )}
                       </div>
                     </td>
@@ -321,6 +302,39 @@ export default function AdminClientes() {
               </tbody>
             </table>
           </div>
+          {/* Mobile cards */}
+          <div className="md:hidden divide-y divide-gray-50">
+            {filtered.length === 0 ? (
+              <p className="px-4 py-10 text-center text-sm text-gray-400">No hay clientes registrados</p>
+            ) : filtered.map(c => (
+              <div key={c.id} className="p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0" style={{ backgroundColor: hashColor(c.nombre) }}>
+                    {getInitials(c.nombre)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-gray-800 text-sm truncate">{c.nombre}</p>
+                    <p className="text-xs text-gray-400 truncate">{c.email}</p>
+                  </div>
+                  <span className="ml-auto inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0" style={{ backgroundColor: c.activo ? '#DCFCE7' : '#F3F4F6', color: c.activo ? '#16A34A' : '#6B7280' }}>
+                    {c.activo ? 'Activo' : 'Inactivo'}
+                  </span>
+                </div>
+                <div className="text-xs text-gray-500 flex gap-4">
+                  <span>{c.telefono ?? '—'}</span>
+                  <span>Desde {formatFecha(c.createdAt)}</span>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setHistorialOf(c)} className="flex-1 py-2 text-xs font-medium border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">Historial</button>
+                  <button onClick={() => setModalCliente(c)} className="flex-1 py-2 text-xs font-medium border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">Editar</button>
+                  {c.activo && (
+                    <button onClick={() => { setDeactivateId(c.id); setDeactivateError('') }} className="flex-1 py-2 text-xs font-medium border border-red-100 text-red-500 rounded-xl hover:bg-red-50 transition-colors">Desactivar</button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          </>
         )}
       </div>
 

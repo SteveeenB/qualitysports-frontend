@@ -415,7 +415,7 @@ export default function AdminProductos() {
   )
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -454,7 +454,8 @@ export default function AdminProductos() {
           <div className="flex justify-center py-16"><Spinner size="lg" /></div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100">
@@ -522,9 +523,44 @@ export default function AdminProductos() {
               </table>
             </div>
 
+            {/* Mobile cards */}
+            <div className="md:hidden divide-y divide-gray-50">
+              {filtered.length === 0 ? (
+                <p className="px-4 py-10 text-center text-sm text-gray-400">No hay productos</p>
+              ) : filtered.map(p => (
+                <div key={p.id} className="p-4 flex items-center gap-3">
+                  <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
+                    {p.imagenUrl
+                      ? <img src={p.imagenUrl} alt={p.nombre} className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center text-gray-300 text-xl">👟</div>
+                    }
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-800 text-sm truncate">{p.nombre}</p>
+                    <p className="text-sm font-bold mt-0.5" style={{ color: '#C0392B' }}>{COP(p.precioBase)}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{p.tallasDisponibles?.length ?? 0} tallas</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                    <Badge estado={p.activo ? 'Activo' : 'Inactivo'} />
+                    <div className="flex gap-2">
+                      <button onClick={() => openEdit(p)} className="px-2.5 py-1.5 text-xs font-medium border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">Editar</button>
+                      <button
+                        onClick={() => toggleEstado(p)}
+                        className="relative w-9 h-5 rounded-full transition-colors flex-shrink-0"
+                        style={{ backgroundColor: p.activo ? '#C0392B' : '#D1D5DB' }}
+                        title={p.activo ? 'Desactivar' : 'Activar'}
+                      >
+                        <span className="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform" style={{ transform: p.activo ? 'translateX(18px)' : 'translateX(2px)' }} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
             {/* Paginación */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
+              <div className="flex items-center justify-between px-4 md:px-6 py-4 border-t border-gray-100">
                 <p className="text-xs text-gray-400">Página {page + 1} de {totalPages}</p>
                 <div className="flex gap-2">
                   <button disabled={page === 0} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors">Anterior</button>

@@ -189,7 +189,7 @@ export default function AsesorDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Topbar asesor */}
-      <header className="bg-white border-b border-gray-100 px-8 py-5">
+      <header className="bg-white border-b border-gray-100 px-4 md:px-8 py-4 md:py-5">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold" style={{ color: '#1C1C1E' }}>Mis pedidos</h1>
@@ -204,7 +204,7 @@ export default function AsesorDashboard() {
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto px-8 py-8">
+      <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 md:py-8">
         <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
           {loading ? (
             <div className="flex justify-center py-16"><Spinner size="lg" /></div>
@@ -213,36 +213,60 @@ export default function AsesorDashboard() {
               <p className="text-sm">No tienes pedidos asignados aún.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100">
-                    {['#', 'CLIENTE', 'FECHA', 'MONTO', 'ESTADO', ''].map(h => (
-                      <th key={h} className="px-6 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {pedidos.map(p => (
-                    <tr key={p.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-3.5 font-mono text-xs text-gray-500">#QS-2026-{String(p.id).padStart(4,'0')}</td>
-                      <td className="px-6 py-3.5 font-medium text-gray-800">{p.compradorNombre} {p.compradorApellido}</td>
-                      <td className="px-6 py-3.5 text-gray-500">{formatFecha(p.fecha)}</td>
-                      <td className="px-6 py-3.5 font-semibold text-gray-800">{COP(p.totalNeto)}</td>
-                      <td className="px-6 py-3.5"><Badge estado={p.estadoActual} /></td>
-                      <td className="px-6 py-3.5">
-                        <button
-                          onClick={() => setSelected(p)}
-                          className="px-3.5 py-1.5 text-xs font-medium border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                        >
-                          Ver detalle
-                        </button>
-                      </td>
+            <>
+              {/* Desktop table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      {['#', 'CLIENTE', 'FECHA', 'MONTO', 'ESTADO', ''].map(h => (
+                        <th key={h} className="px-6 py-3.5 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{h}</th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {pedidos.map(p => (
+                      <tr key={p.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-3.5 font-mono text-xs text-gray-500">#QS-2026-{String(p.id).padStart(4,'0')}</td>
+                        <td className="px-6 py-3.5 font-medium text-gray-800">{p.compradorNombre} {p.compradorApellido}</td>
+                        <td className="px-6 py-3.5 text-gray-500">{formatFecha(p.fecha)}</td>
+                        <td className="px-6 py-3.5 font-semibold text-gray-800">{COP(p.totalNeto)}</td>
+                        <td className="px-6 py-3.5"><Badge estado={p.estadoActual} /></td>
+                        <td className="px-6 py-3.5">
+                          <button onClick={() => setSelected(p)} className="px-3.5 py-1.5 text-xs font-medium border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                            Ver detalle
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {/* Mobile cards */}
+              <div className="md:hidden divide-y divide-gray-50">
+                {pedidos.map(p => (
+                  <div key={p.id} className="p-4 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-semibold text-gray-800 text-sm">{p.compradorNombre} {p.compradorApellido}</p>
+                        <p className="text-xs font-mono text-gray-400 mt-0.5">#QS-2026-{String(p.id).padStart(4,'0')}</p>
+                      </div>
+                      <Badge estado={p.estadoActual} />
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-400 text-xs">{formatFecha(p.fecha)}</span>
+                      <span className="font-bold" style={{ color: '#C0392B' }}>{COP(p.totalNeto)}</span>
+                    </div>
+                    <button
+                      onClick={() => setSelected(p)}
+                      className="w-full mt-1 py-2 text-xs font-medium border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                    >
+                      Ver detalle
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>

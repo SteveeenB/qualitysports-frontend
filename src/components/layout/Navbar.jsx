@@ -33,7 +33,10 @@ export default function Navbar() {
             <NavLink to="/"         end className={navLinkClass}>Inicio</NavLink>
             <NavLink to="/catalogo"     className={navLinkClass}>Catálogo</NavLink>
             {user?.role === 'CLIENTE' && (
-              <NavLink to="/mis-pedidos" className={navLinkClass}>Mis Pedidos</NavLink>
+              <>
+                <NavLink to="/mis-pedidos" className={navLinkClass}>Mis Pedidos</NavLink>
+                <NavLink to="/mi-perfil"   className={navLinkClass}>Mi Perfil</NavLink>
+              </>
             )}
           </nav>
 
@@ -110,7 +113,10 @@ export default function Navbar() {
             <NavLink to="/"         end className={navLinkClass} onClick={() => setMenuOpen(false)}>Inicio</NavLink>
             <NavLink to="/catalogo"     className={navLinkClass} onClick={() => setMenuOpen(false)}>Catálogo</NavLink>
             {user?.role === 'CLIENTE' && (
-              <NavLink to="/mis-pedidos" className={navLinkClass} onClick={() => setMenuOpen(false)}>Mis Pedidos</NavLink>
+              <>
+                <NavLink to="/mis-pedidos" className={navLinkClass} onClick={() => setMenuOpen(false)}>Mis Pedidos</NavLink>
+                <NavLink to="/mi-perfil"   className={navLinkClass} onClick={() => setMenuOpen(false)}>Mi Perfil</NavLink>
+              </>
             )}
             <div className="border-t border-gray-100 pt-4 flex flex-col gap-2">
               {!user ? (

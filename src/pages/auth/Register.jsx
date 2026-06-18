@@ -4,6 +4,23 @@ import { register as registerApi } from '../../api/auth'
 import { useAuth } from '../../context/AuthContext'
 import Spinner from '../../components/ui/Spinner'
 
+function Field({ label, field, type = 'text', placeholder, value, error, onChange }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-[#1C1C1E] mb-1.5">{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={e => onChange(field, e.target.value)}
+        placeholder={placeholder}
+        className={`w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none transition-colors
+          ${error ? 'border-[#C0392B]' : 'border-gray-200 focus:border-[#C0392B]'}`}
+      />
+      {error && <p className="text-xs text-[#C0392B] mt-1">{error}</p>}
+    </div>
+  )
+}
+
 export default function Register() {
   const { login } = useAuth()
   const navigate  = useNavigate()
@@ -47,23 +64,6 @@ export default function Register() {
     }
   }
 
-  function Field({ label, field, type = 'text', placeholder }) {
-    return (
-      <div>
-        <label className="block text-sm font-medium text-[#1C1C1E] mb-1.5">{label}</label>
-        <input
-          type={type}
-          value={form[field]}
-          onChange={e => set(field, e.target.value)}
-          placeholder={placeholder}
-          className={`w-full px-3.5 py-2.5 border rounded-xl text-sm focus:outline-none transition-colors
-            ${errors[field] ? 'border-[#C0392B]' : 'border-gray-200 focus:border-[#C0392B]'}`}
-        />
-        {errors[field] && <p className="text-xs text-[#C0392B] mt-1">{errors[field]}</p>}
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
@@ -71,10 +71,10 @@ export default function Register() {
         <p className="text-gray-400 text-sm text-center mb-7">Regístrate para realizar pedidos</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Field label="Nombre completo" field="nombre" placeholder="Juan Pérez" />
-          <Field label="Correo electrónico" field="email" type="email" placeholder="correo@ejemplo.com" />
-          <Field label="Contraseña" field="password" type="password" placeholder="Mínimo 8 caracteres" />
-          <Field label="Confirmar contraseña" field="confirm" type="password" placeholder="" />
+          <Field label="Nombre completo"      field="nombre"   placeholder="Juan Pérez"          value={form.nombre}   error={errors.nombre}   onChange={set} />
+          <Field label="Correo electrónico"   field="email"    type="email" placeholder="correo@ejemplo.com" value={form.email}    error={errors.email}    onChange={set} />
+          <Field label="Contraseña"           field="password" type="password" placeholder="Mínimo 8 caracteres" value={form.password} error={errors.password} onChange={set} />
+          <Field label="Confirmar contraseña" field="confirm"  type="password" placeholder=""               value={form.confirm}  error={errors.confirm}  onChange={set} />
 
           {apiError && (
             <p className="text-sm text-[#C0392B] bg-red-50 border border-red-100 rounded-xl px-4 py-2.5 text-center">

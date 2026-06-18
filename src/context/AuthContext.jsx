@@ -31,10 +31,16 @@ export function AuthProvider({ children }) {
     setUser(null)
   }
 
+  function updateUser(partial) {
+    const updated = { ...user, ...partial }
+    localStorage.setItem('qs_user', JSON.stringify(updated))
+    setUser(updated)
+  }
+
   const role = user?.role ?? null
 
   return (
-    <AuthContext.Provider value={{ user, token, role, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, token, role, loading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   )

@@ -104,7 +104,7 @@ export default function AdminDashboard() {
   ]
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-4 md:p-8 space-y-6 md:space-y-8">
       <div>
         <h1 className="text-2xl font-bold" style={{ color: '#1C1C1E' }}>Panel de analítica</h1>
         <p className="text-sm text-gray-400 mt-0.5">Resumen general del negocio</p>

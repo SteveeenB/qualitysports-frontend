@@ -14,7 +14,9 @@ import Confirmacion     from '../pages/public/Confirmacion'
 import Login    from '../pages/auth/Login'
 import Register from '../pages/auth/Register'
 
-import MisPedidos from '../pages/cliente/MisPedidos'
+import MisPedidos        from '../pages/cliente/MisPedidos'
+import MisPedidoDetalle  from '../pages/cliente/MisPedidoDetalle'
+import MiPerfil          from '../pages/cliente/MiPerfil'
 
 import AsesorDashboard     from '../pages/asesor/AsesorDashboard'
 import AsesorDetallePedido from '../pages/asesor/AsesorDetallePedido'
@@ -61,6 +63,8 @@ export default function AppRouter() {
           <Route path="/checkout"            element={<Checkout />} />
           <Route path="/confirmacion/:id"    element={<Confirmacion />} />
           <Route path="/mis-pedidos"         element={<PrivateRoute roles={['CLIENTE']}><MisPedidos /></PrivateRoute>} />
+          <Route path="/mis-pedidos/:id"    element={<PrivateRoute roles={['CLIENTE']}><MisPedidoDetalle /></PrivateRoute>} />
+          <Route path="/mi-perfil"          element={<PrivateRoute roles={['CLIENTE']}><MiPerfil /></PrivateRoute>} />
         </Route>
 
         {/* Auth sin layout */}
