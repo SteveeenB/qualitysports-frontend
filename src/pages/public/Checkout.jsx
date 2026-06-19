@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
+import { useAuth } from '../../context/AuthContext'
 import { crearPedido, listarDescuentos } from '../../api/pedidos'
+import { getPerfil } from '../../api/auth'
 import { departamentos } from 'colombia-territorial'
 import Spinner from '../../components/ui/Spinner'
 
@@ -105,14 +107,37 @@ const INITIAL = {
 
 export default function Checkout() {
   const { items: cartItems, subtotal, clearCart } = useCart()
+  const { user, role } = useAuth()
   const navigate = useNavigate()
-  const [form, setForm]     = useState(INITIAL)
-  const [errors, setErrors] = useState({})
-  const [loading, setLoading] = useState(false)
-  const [reglas, setReglas] = useState([])
+  const [form, setForm]         = useState(INITIAL)
+  const [errors, setErrors]     = useState({})
+  const [loading, setLoading]   = useState(false)
+  const [reglas, setReglas]     = useState([])
+  const [prefilled, setPrefilled] = useState(false)
+
+  useEffect(() => { window.scrollTo(0, 0) }, [])
 
   useEffect(() => {
     listarDescuentos().then(r => setReglas(r.data)).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (role !== 'CLIENTE') return
+    const parts = (user?.nombre ?? '').trim().split(/\s+/)
+    const nombre   = parts[0] ?? ''
+    const apellido = parts.slice(1).join(' ')
+    setForm(f => ({ ...f, compradorNombre: nombre, compradorApellido: apellido, compradorEmail: user?.email ?? '' }))
+    getPerfil()
+      .then(r => {
+        const p = r.data
+        setForm(f => ({
+          ...f,
+          compradorTelefono: p.telefono    || f.compradorTelefono,
+          direccionEnvio:    p.direccionEnvio || f.direccionEnvio,
+        }))
+        setPrefilled(true)
+      })
+      .catch(() => { setPrefilled(true) })
   }, [])
 
   if (cartItems.length === 0) {
@@ -194,6 +219,12 @@ export default function Checkout() {
         {/* Formulario */}
         <div className="lg:col-span-2">
           <div className="bg-white border border-gray-100 rounded-2xl p-6">
+            {prefilled && (
+              <div className="flex items-center gap-2 mb-5 px-3 py-2 rounded-xl bg-blue-50 text-blue-700 text-xs font-medium">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                Prellenamos los datos de tu cuenta · puedes editarlos antes de continuar
+              </div>
+            )}
             <h2 className="font-semibold text-[#1C1C1E] mb-5">Datos personales</h2>
 
             <div className="grid grid-cols-2 gap-4">

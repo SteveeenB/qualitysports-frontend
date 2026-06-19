@@ -1,21 +1,52 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
+import { listarDescuentos } from '../../api/pedidos'
 
 function formatCOP(n) {
   return new Intl.NumberFormat('es-CO').format(n)
 }
 
+function calcularDescuento(subtotal, totalPares, reglas) {
+  if (!reglas || reglas.length === 0) return null
+  const regla = [...reglas]
+    .sort((a, b) => b.cantidadPares - a.cantidadPares)
+    .find(r => r.cantidadPares <= totalPares)
+  if (!regla) return null
+  const precioPorPar = regla.precioTotalPaquete / regla.cantidadPares
+  const totalNeto = precioPorPar * totalPares
+  const ahorro = subtotal - totalNeto
+  if (ahorro <= 0) return null
+  return { totalNeto, ahorro, cantidadPares: regla.cantidadPares }
+}
+
+function proximoDescuento(totalPares, reglas) {
+  if (!reglas || reglas.length === 0) return null
+  const sorted = [...reglas].sort((a, b) => a.cantidadPares - b.cantidadPares)
+  return sorted.find(r => r.cantidadPares > totalPares) ?? null
+}
+
 export default function CartDrawer() {
   const { items, drawerOpen, setDrawerOpen, updateCantidad, removeItem, totalItems, subtotal } = useCart()
   const navigate = useNavigate()
+  const [reglas, setReglas] = useState([])
 
   useEffect(() => {
     document.body.style.overflow = drawerOpen ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
   }, [drawerOpen])
 
+  useEffect(() => {
+    if (drawerOpen && reglas.length === 0) {
+      listarDescuentos().then(r => setReglas(r.data ?? [])).catch(() => {})
+    }
+  }, [drawerOpen])
+
   if (!drawerOpen) return null
+
+  const totalPares = items.reduce((s, i) => s + i.cantidad, 0)
+  const descuento  = calcularDescuento(subtotal, totalPares, reglas)
+  const proximo    = !descuento ? proximoDescuento(totalPares, reglas) : null
 
   return (
     <>
@@ -96,9 +127,33 @@ export default function CartDrawer() {
           <div className="border-t border-gray-100 px-5 py-4 space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-gray-500 text-sm">Subtotal</span>
-              <span className="font-bold text-[#1C1C1E]">${formatCOP(subtotal)} COP</span>
+              <span className="font-medium text-[#1C1C1E]">${formatCOP(subtotal)} COP</span>
             </div>
-            <p className="text-xs text-gray-400">Descuentos por volumen se aplican en checkout</p>
+
+            {descuento && (
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium" style={{ color: '#16A34A' }}>
+                  Descuento paquete ({totalPares} pares)
+                </span>
+                <span className="font-semibold" style={{ color: '#16A34A' }}>
+                  −${formatCOP(descuento.ahorro)} COP
+                </span>
+              </div>
+            )}
+
+            {!descuento && proximo && (
+              <p className="text-xs px-3 py-2 rounded-lg bg-amber-50 text-amber-700">
+                Añade {proximo.cantidadPares - totalPares} par{proximo.cantidadPares - totalPares !== 1 ? 'es' : ''} más y obtén descuento de paquete
+              </p>
+            )}
+
+            <div className="flex justify-between items-center border-t border-gray-100 pt-2">
+              <span className="text-sm font-bold text-[#1C1C1E]">Total</span>
+              <span className="font-bold text-[#C0392B]">
+                ${formatCOP(descuento ? descuento.totalNeto : subtotal)} COP
+              </span>
+            </div>
+
             <button
               onClick={() => { setDrawerOpen(false); navigate('/checkout') }}
               className="w-full py-3 bg-[#C0392B] text-white font-semibold rounded-xl hover:bg-[#A93226] transition-colors active:scale-[0.98]"

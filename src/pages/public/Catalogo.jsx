@@ -14,7 +14,7 @@ function ModeloCard({ modelo, isSelected, onSelect }) {
       onClick={onSelect}
       whileHover={{ scale: 1.04 }}
       whileTap={{ scale: 0.97 }}
-      className="flex items-center gap-2.5 px-3 py-2 rounded-xl border transition-colors flex-shrink-0"
+      className="flex items-center gap-3 px-4 py-3 rounded-xl border transition-colors flex-shrink-0"
       style={{
         backgroundColor: isSelected ? '#FEF2F1' : '#FFFFFF',
         borderColor: isSelected ? '#C0392B' : '#E5E5E5',
@@ -25,11 +25,12 @@ function ModeloCard({ modelo, isSelected, onSelect }) {
           src={toCollageUrl(modelo.imagenRepresentativa)}
           alt={modelo.nombre}
           loading="lazy"
-          className="w-9 h-9 rounded-lg object-cover flex-shrink-0"
+          className="w-14 h-14 rounded-xl object-contain flex-shrink-0"
+          style={{ backgroundColor: '#F7F7F7' }}
         />
       )}
       <span
-        className="text-sm font-medium whitespace-nowrap"
+        className="text-sm font-semibold whitespace-nowrap"
         style={{ color: isSelected ? '#C0392B' : '#1C1C1E' }}
       >
         {modelo.nombre}

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useRef } from 'react'
 
 const CartContext = createContext(null)
 
@@ -11,10 +11,23 @@ export function CartProvider({ children }) {
     }
   })
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [toast, setToast] = useState(null)
+  const toastTimer = useRef(null)
 
   useEffect(() => {
     localStorage.setItem('qs_cart', JSON.stringify(items))
   }, [items])
+
+  function triggerToast(product, talla) {
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    setToast({ product, talla })
+    toastTimer.current = setTimeout(() => setToast(null), 3000)
+  }
+
+  function dismissToast() {
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    setToast(null)
+  }
 
   function addItem(product, talla, cantidad = 1) {
     setItems(prev => {
@@ -25,7 +38,7 @@ export function CartProvider({ children }) {
       }
       return [...prev, { key, product, talla, cantidad }]
     })
-    setDrawerOpen(true)
+    triggerToast(product, talla)
   }
 
   function updateCantidad(key, cantidad) {
@@ -48,7 +61,8 @@ export function CartProvider({ children }) {
     <CartContext.Provider value={{
       items, drawerOpen, setDrawerOpen,
       addItem, updateCantidad, removeItem, clearCart,
-      totalItems, subtotal
+      totalItems, subtotal,
+      toast, dismissToast,
     }}>
       {children}
     </CartContext.Provider>

@@ -2,7 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 import Layout      from '../components/layout/Layout'
-import AdminLayout from '../components/layout/AdminLayout'
+import AdminLayout  from '../components/layout/AdminLayout'
+import AsesorLayout from '../components/layout/AsesorLayout'
 
 import Home             from '../pages/public/Home'
 import Catalogo         from '../pages/public/Catalogo'
@@ -71,9 +72,11 @@ export default function AppRouter() {
         <Route path="/login"    element={<GuestRoute><Login /></GuestRoute>} />
         <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
 
-        {/* Asesor */}
-        <Route path="/asesor"            element={<PrivateRoute roles={['ASESOR_VENTAS']}><AsesorDashboard /></PrivateRoute>} />
-        <Route path="/asesor/pedido/:id" element={<PrivateRoute roles={['ASESOR_VENTAS']}><AsesorDetallePedido /></PrivateRoute>} />
+        {/* Asesor — rutas anidadas dentro de AsesorLayout */}
+        <Route element={<PrivateRoute roles={['ASESOR_VENTAS']}><AsesorLayout /></PrivateRoute>}>
+          <Route path="/asesor"            element={<AsesorDashboard />} />
+          <Route path="/asesor/pedido/:id" element={<AsesorDetallePedido />} />
+        </Route>
 
         {/* Admin — rutas anidadas dentro de AdminLayout */}
         <Route element={<PrivateRoute roles={['ADMINISTRADOR']}><AdminLayout /></PrivateRoute>}>

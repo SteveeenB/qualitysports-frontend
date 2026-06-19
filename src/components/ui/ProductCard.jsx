@@ -33,7 +33,7 @@ export default function ProductCard({ product, compact = false, featured = false
       {/* Image */}
       <Link
         to={`/producto/${product.id}`}
-        className="block overflow-hidden flex-shrink-0"
+        className="block overflow-hidden flex-shrink-0 flex items-center justify-center p-4"
         style={{
           backgroundColor: '#F7F7F7',
           aspectRatio: featured ? '16/10' : '1',
@@ -43,7 +43,7 @@ export default function ProductCard({ product, compact = false, featured = false
           <img
             src={product.imagenUrl}
             alt={product.nombre}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-300">
