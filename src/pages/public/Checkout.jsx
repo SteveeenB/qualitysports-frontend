@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { Truck, Storefront, Info } from '@phosphor-icons/react'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { crearPedido, listarDescuentos } from '../../api/pedidos'
@@ -58,7 +59,7 @@ function Combobox({ options, value, onChange, placeholder, disabled = false }) {
   )
 }
 
-// ── Field — módulo level para evitar pérdida de foco ─────────────────────────
+// ── Field ─────────────────────────────────────────────────────────────────────
 function Field({ label, placeholder, type = 'text', half = false, value, error, onChange, required = true }) {
   return (
     <div className={half ? 'col-span-1' : 'col-span-2'}>
@@ -78,7 +79,45 @@ function Field({ label, placeholder, type = 'text', half = false, value, error, 
   )
 }
 
-// ── Lógica de descuento (igual que backend) ───────────────────────────────────
+// ── Stepper ────────────────────────────────────────────────────────────────────
+function Stepper() {
+  const steps = ['Carrito', 'Datos', 'Confirmado']
+  const active = 1
+
+  return (
+    <div className="flex items-center gap-0 mb-8">
+      {steps.map((step, i) => (
+        <div key={step} className="flex items-center">
+          <div className="flex items-center gap-2">
+            <div
+              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+              style={{
+                backgroundColor: i <= active ? '#C0392B' : '#E5E5E5',
+                color: i <= active ? '#FFFFFF' : '#9CA3AF',
+              }}
+            >
+              {i + 1}
+            </div>
+            <span
+              className="text-xs font-medium"
+              style={{ color: i === active ? '#C0392B' : i < active ? '#1C1C1E' : '#9CA3AF' }}
+            >
+              {step}
+            </span>
+          </div>
+          {i < steps.length - 1 && (
+            <div
+              className="w-8 h-px mx-2 flex-shrink-0"
+              style={{ backgroundColor: i < active ? '#C0392B' : '#E5E5E5' }}
+            />
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── Lógica de descuento ───────────────────────────────────────────────────────
 function calcularDescuento(subtotal, totalPares, reglas) {
   if (!reglas || reglas.length === 0) return null
   const regla = [...reglas]
@@ -144,7 +183,7 @@ export default function Checkout() {
     return (
       <div className="max-w-6xl mx-auto px-4 py-24 text-center">
         <p className="text-gray-500 mb-4">Tu carrito está vacío.</p>
-        <Link to="/catalogo" className="text-[#C0392B] font-medium hover:underline">Ver catálogo →</Link>
+        <Link to="/catalogo" className="text-[#C0392B] font-medium hover:underline">Ver catálogo</Link>
       </div>
     )
   }
@@ -204,14 +243,7 @@ export default function Checkout() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
-      {/* Stepper */}
-      <div className="flex items-center gap-2 text-xs text-gray-400 mb-8">
-        <Link to="/carrito" className="hover:text-[#C0392B]">Carrito</Link>
-        <span className="text-gray-300">→</span>
-        <span className="text-[#C0392B] font-medium">Datos</span>
-        <span className="text-gray-300">→</span>
-        <span>Confirmado</span>
-      </div>
+      <Stepper />
 
       <h1 className="text-2xl font-bold text-[#1C1C1E] mb-8">Realizar pedido</h1>
 
@@ -251,18 +283,27 @@ export default function Checkout() {
             <div className="mb-4">
               <label className="block text-sm font-medium text-[#1C1C1E] mb-2">Modalidad de entrega</label>
               <div className="flex gap-3">
-                {[{ v: 'DOMICILIO', label: '🚚 Domicilio' }, { v: 'OFICINA', label: '🏪 Retiro en oficina' }].map(opt => (
+                {[
+                  { v: 'DOMICILIO', label: 'Domicilio', Icon: Truck },
+                  { v: 'OFICINA',   label: 'Retiro en oficina', Icon: Storefront },
+                ].map(opt => (
                   <button key={opt.v} type="button"
                     onClick={() => set('modalidadEntrega', opt.v)}
-                    className={`flex-1 py-2.5 rounded-xl text-sm font-medium border transition-all
-                      ${form.modalidadEntrega === opt.v ? 'bg-[#C0392B] text-white border-[#C0392B]' : 'bg-white text-gray-600 border-gray-200 hover:border-[#C0392B]'}`}
-                  >{opt.label}</button>
+                    className="flex-1 py-2.5 rounded-xl text-sm font-medium border transition-all flex items-center justify-center gap-2"
+                    style={{
+                      backgroundColor: form.modalidadEntrega === opt.v ? '#C0392B' : '#FFFFFF',
+                      color: form.modalidadEntrega === opt.v ? '#FFFFFF' : '#4B5563',
+                      borderColor: form.modalidadEntrega === opt.v ? '#C0392B' : '#E5E7EB',
+                    }}
+                  >
+                    <opt.Icon size={16} weight={form.modalidadEntrega === opt.v ? 'fill' : 'regular'} />
+                    {opt.label}
+                  </button>
                 ))}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              {/* Departamento combobox — siempre visible */}
               <div>
                 <label className="block text-sm font-medium text-[#1C1C1E] mb-1.5">
                   Departamento <span className="text-[#C0392B]">*</span>
@@ -276,7 +317,6 @@ export default function Checkout() {
                 {errors.departamento && <p className="text-xs text-[#C0392B] mt-1">{errors.departamento}</p>}
               </div>
 
-              {/* Municipio combobox — siempre visible */}
               <div>
                 <label className="block text-sm font-medium text-[#1C1C1E] mb-1.5">
                   Municipio <span className="text-[#C0392B]">*</span>
@@ -291,7 +331,6 @@ export default function Checkout() {
                 {errors.municipio && <p className="text-xs text-[#C0392B] mt-1">{errors.municipio}</p>}
               </div>
 
-              {/* Dirección y barrio — solo para DOMICILIO */}
               {form.modalidadEntrega === 'DOMICILIO' && (
                 <>
                   <Field label="Dirección exacta" placeholder="Calle 0 # 00-00"
@@ -306,7 +345,7 @@ export default function Checkout() {
 
             {/* Info pago */}
             <div className="mt-5 flex items-start gap-3 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
-              <span className="text-amber-500 mt-0.5">ℹ️</span>
+              <Info size={18} weight="fill" className="text-amber-500 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-amber-800">
                 <strong>Pago contraentrega.</strong> El asesor confirmará tu pedido vía WhatsApp antes del despacho.
               </p>
@@ -325,12 +364,14 @@ export default function Checkout() {
                   <div className="w-10 h-10 rounded-lg overflow-hidden bg-white flex-shrink-0">
                     {item.product.imagenUrl
                       ? <img src={item.product.imagenUrl} alt="" className="w-full h-full object-cover" />
-                      : <div className="w-full h-full flex items-center justify-center text-lg">👟</div>
+                      : <div className="w-full h-full flex items-center justify-center text-gray-300">
+                          <span className="text-lg">👟</span>
+                        </div>
                     }
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-[#1C1C1E] line-clamp-1">{item.product.nombre}</p>
-                    <p className="text-xs text-gray-400">Talla {item.talla} · ×{item.cantidad}</p>
+                    <p className="text-xs text-gray-400">Talla {item.talla} · x{item.cantidad}</p>
                   </div>
                   <p className="text-xs font-bold text-[#1C1C1E] flex-shrink-0">
                     ${formatCOP(item.product.precioBase * item.cantidad)}
@@ -347,7 +388,7 @@ export default function Checkout() {
               {descuento ? (
                 <div className="flex justify-between text-sm" style={{ color: '#C0392B' }}>
                   <span>Descuento</span>
-                  <span className="font-medium">−${formatCOP(Math.round(descuento.ahorro))}</span>
+                  <span className="font-medium">-${formatCOP(Math.round(descuento.ahorro))}</span>
                 </div>
               ) : (
                 <div className="flex justify-between text-sm">
@@ -365,14 +406,17 @@ export default function Checkout() {
 
             {descuento && (
               <div className="mb-4 rounded-xl px-4 py-3 text-sm font-semibold" style={{ backgroundColor: '#FEF2F1', color: '#C0392B' }}>
-                ¡Ahorrarás ${formatCOP(Math.round(descuento.ahorro))} COP con el precio con DESCUENTO!
+                Ahorrarás ${formatCOP(Math.round(descuento.ahorro))} COP con el precio de paquete
               </div>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 bg-[#C0392B] text-white font-semibold rounded-xl hover:bg-[#A93226] transition-colors active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2"
+              className="w-full py-3.5 text-white font-semibold rounded-xl transition-colors active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2"
+              style={{ backgroundColor: '#C0392B' }}
+              onMouseOver={e => !loading && (e.currentTarget.style.backgroundColor = '#A93226')}
+              onMouseOut={e => (e.currentTarget.style.backgroundColor = '#C0392B')}
             >
               {loading ? <><Spinner size="sm" /> Procesando...</> : 'Confirmar Pedido'}
             </button>

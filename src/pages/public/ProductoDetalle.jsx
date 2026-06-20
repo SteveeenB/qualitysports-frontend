@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
+import { ShoppingCart, Check } from '@phosphor-icons/react'
 import { obtenerProducto } from '../../api/productos'
+import { listarDescuentos } from '../../api/pedidos'
 import { useCart } from '../../context/CartContext'
 import SizeChips from '../../components/ui/SizeChips'
 import Spinner from '../../components/ui/Spinner'
@@ -20,12 +22,17 @@ export default function ProductoDetalle() {
   const [cantidad, setCantidad] = useState(1)
   const [added, setAdded]       = useState(false)
   const [error, setError]       = useState(false)
+  const [reglas, setReglas]     = useState([])
 
   useEffect(() => {
     obtenerProducto(id)
       .then(r => setProduct(r.data))
       .catch(() => setError(true))
       .finally(() => setLoading(false))
+
+    listarDescuentos()
+      .then(r => setReglas(r.data ?? []))
+      .catch(() => {})
   }, [id])
 
   function handleAdd() {
@@ -46,6 +53,8 @@ export default function ProductoDetalle() {
     </div>
   )
 
+  const reglasOrdenadas = [...reglas].sort((a, b) => a.cantidadPares - b.cantidadPares)
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       {/* Breadcrumb */}
@@ -62,7 +71,9 @@ export default function ProductoDetalle() {
         <div className="rounded-2xl overflow-hidden bg-[#F5F5F5] aspect-square">
           {product.imagenUrl
             ? <img src={product.imagenUrl} alt={product.nombre} className="w-full h-full object-cover" />
-            : <div className="w-full h-full flex items-center justify-center text-8xl">👟</div>
+            : <div className="w-full h-full flex items-center justify-center text-gray-300">
+                <ShoppingCart size={64} weight="thin" />
+              </div>
           }
         </div>
 
@@ -102,7 +113,7 @@ export default function ProductoDetalle() {
                 <button
                   onClick={() => setCantidad(c => Math.max(1, c - 1))}
                   className="px-4 py-2 hover:bg-gray-50 text-gray-600 font-bold text-lg transition-colors"
-                >−</button>
+                >-</button>
                 <span className="px-4 py-2 font-semibold text-[#1C1C1E] min-w-[3rem] text-center">{cantidad}</span>
                 <button
                   onClick={() => setCantidad(c => c + 1)}
@@ -113,31 +124,51 @@ export default function ProductoDetalle() {
             </div>
           </div>
 
-          {/* Descuentos por volumen */}
-          <div className="border-l-4 border-[#C0392B] bg-[#FEF2F1] rounded-r-xl px-4 py-3">
-            <p className="text-sm font-semibold text-[#C0392B] mb-2">Descuentos por volumen automáticos</p>
-            <div className="space-y-1 text-xs text-gray-600">
-              <div className="flex justify-between"><span>2–5 pares en la compra</span><span className="text-[#C0392B] font-medium">5%</span></div>
-              <div className="flex justify-between"><span>6–11 pares en la compra</span><span className="text-[#C0392B] font-medium">8%</span></div>
-              <div className="flex justify-between"><span>12+ pares</span><span className="text-[#C0392B] font-medium">10%</span></div>
+          {/* Precios de paquete — datos reales del backend */}
+          {reglasOrdenadas.length > 0 && (
+            <div className="border-l-4 border-[#C0392B] bg-[#FEF2F1] rounded-r-xl px-4 py-3">
+              <p className="text-sm font-semibold text-[#C0392B] mb-2">Precios de paquete</p>
+              <div className="space-y-1.5">
+                {reglasOrdenadas.map(r => (
+                  <div key={r.cantidadPares} className="flex justify-between text-xs">
+                    <span className="text-gray-600">{r.cantidadPares} pares</span>
+                    <span className="font-semibold text-[#C0392B]">
+                      ${formatCOP(r.precioTotalPaquete)} COP
+                      <span className="font-normal text-gray-400 ml-1">
+                        (${formatCOP(Math.round(r.precioTotalPaquete / r.cantidadPares))}/par)
+                      </span>
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* CTA */}
           <button
             onClick={handleAdd}
             disabled={!talla}
-            className={`py-4 rounded-xl font-semibold text-base transition-all active:scale-[0.98]
-              ${talla ? 'bg-[#C0392B] text-white hover:bg-[#A93226]' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+            className="py-4 rounded-xl font-semibold text-base transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+            style={{
+              backgroundColor: added ? '#16a34a' : talla ? '#C0392B' : '#F5F5F5',
+              color: talla || added ? '#FFFFFF' : '#9CA3AF',
+              cursor: !talla ? 'not-allowed' : 'pointer',
+            }}
           >
-            {added ? '✓ Agregado al carrito' : talla ? '🛒 Agregar al carrito' : 'Selecciona una talla'}
+            {added ? (
+              <><Check size={18} weight="bold" /> Agregado al carrito</>
+            ) : talla ? (
+              <><ShoppingCart size={18} weight="bold" /> Agregar al carrito</>
+            ) : (
+              'Selecciona una talla'
+            )}
           </button>
 
           <button
             onClick={() => navigate('/carrito')}
             className="text-sm text-gray-400 hover:text-[#C0392B] transition-colors text-center"
           >
-            Ver carrito →
+            Ver carrito
           </button>
         </div>
       </div>

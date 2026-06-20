@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { Truck, Lock, ChatCircle } from '@phosphor-icons/react'
 import { listarProductos } from '../../api/productos'
 import ProductCard from '../../components/ui/ProductCard'
 import Spinner from '../../components/ui/Spinner'
@@ -79,6 +80,11 @@ export default function Home() {
   const third = Math.ceil(padded.length / 3)
   const cols = [padded.slice(0, third), padded.slice(third, third * 2), padded.slice(third * 2)]
 
+  function scrollToPaquetes(e) {
+    e.preventDefault()
+    document.getElementById('paquetes')?.scrollIntoView({ behavior: 'smooth' })
+  }
+
   return (
     <div>
       {/* ── Hero ──────────────────────────────────────────── */}
@@ -92,7 +98,6 @@ export default function Home() {
             <CollageColumn images={cols[0]} direction="up"   speed={22} left="calc(55% + 0px)"   />
             <CollageColumn images={cols[1]} direction="down" speed={18} left="calc(55% + 162px)" />
             <CollageColumn images={cols[2]} direction="up"   speed={26} left="calc(55% + 324px)" />
-            {/* Overlay — heavier on left (text), lighter on right (collage visible) */}
             <div
               className="absolute inset-0"
               style={{ background: 'linear-gradient(to right, rgba(28,28,30,1) 38%, rgba(28,28,30,0.55) 60%, rgba(28,28,30,0.75) 100%)' }}
@@ -100,7 +105,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Red accent glow — top right */}
+        {/* Red accent glow */}
         <div
           className="absolute top-0 right-0 w-2/3 h-full pointer-events-none"
           style={{ background: 'radial-gradient(ellipse at 85% 30%, rgba(192,57,43,0.18) 0%, transparent 60%)' }}
@@ -112,9 +117,7 @@ export default function Home() {
         />
 
         <div className="relative z-10 w-full px-6 md:px-10 py-16 md:py-24">
-          <div className="flex items-center justify-between gap-12 max-w-[1280px] mx-auto">
-
-            {/* Left — editorial text */}
+          <div className="max-w-[1280px] mx-auto">
             <div className="max-w-lg">
               <div className="flex items-center gap-3 mb-6">
                 <div className="h-px w-8 bg-[#C0392B]" />
@@ -158,61 +161,39 @@ export default function Home() {
                 >
                   Ver Catálogo
                 </Link>
-                <Link
-                  to="/catalogo"
-                  className="px-7 py-3 text-sm font-medium rounded-xl transition-colors"
-                  style={{ border: '1px solid rgba(255,255,255,0.25)', color: '#FFFFFF' }}
+                <a
+                  href="#paquetes"
+                  onClick={scrollToPaquetes}
+                  className="px-7 py-3 text-sm font-medium rounded-xl transition-colors cursor-pointer"
+                  style={{ border: '1px solid rgba(255,255,255,0.25)', color: '#FFFFFF', backgroundColor: 'transparent', textDecoration: 'none' }}
                   onMouseOver={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'}
                   onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
                   Ver paquetes
-                </Link>
-              </div>
-
-              {/* Trust badges */}
-              <div className="flex flex-wrap gap-5 mt-10 pt-8" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                {[
-                  { label: 'Pago contraentrega', icon: '🔒' },
-                  { label: 'Envío a todo Colombia', icon: '🚚' },
-                  { label: 'Atención personalizada', icon: '💬' },
-                ].map(t => (
-                  <div key={t.label} className="flex items-center gap-1.5">
-                    <span className="text-sm">{t.icon}</span>
-                    <span className="text-gray-400 text-xs font-medium">{t.label}</span>
-                  </div>
-                ))}
+                </a>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
 
-            {/* Right — brand composition (desktop only) */}
-            <div className="hidden lg:block flex-shrink-0 relative z-20">
-              <div className="relative w-[340px] h-[340px]">
-                {/* Main red rectangle with logo */}
-                <div
-                  className="absolute top-0 right-0 w-56 h-56 rounded-3xl flex items-center justify-center"
-                  style={{ backgroundColor: '#C0392B' }}
-                >
-                  <img src="/logo.jpeg" alt="Quality Sports" className="w-full h-full object-contain p-4" />
-                </div>
-                {/* Dark square bottom-left */}
-                <div
-                  className="absolute bottom-0 left-0 w-48 h-48 rounded-2xl"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}
-                />
-                {/* Small accent square */}
-                <div
-                  className="absolute bottom-16 right-16 w-10 h-10 rounded-lg"
-                  style={{ border: '2px solid rgba(192,57,43,0.6)' }}
-                />
-                {/* Stat card overlay */}
-                <div
-                  className="absolute bottom-4 right-0 px-5 py-4 rounded-2xl"
-                  style={{ backgroundColor: '#FFFFFF', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}
-                >
-                  <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wide">Descuento mayorista</p>
-                  <p className="text-2xl font-black mt-0.5" style={{ color: '#C0392B' }}>hasta 40%</p>
-                </div>
-              </div>
+      {/* ── Trust strip ───────────────────────────────────── */}
+      <section className="hidden md:block bg-white border-b border-gray-100 py-4">
+        <div className="max-w-[1280px] mx-auto px-6 md:px-10">
+          <div className="flex items-center justify-center gap-10">
+            <div className="flex items-center gap-2 text-gray-500 text-sm">
+              <Truck size={18} weight="duotone" color="#C0392B" />
+              <span>Envío a todo Colombia</span>
+            </div>
+            <div className="w-px h-4 bg-gray-200" />
+            <div className="flex items-center gap-2 text-gray-500 text-sm">
+              <Lock size={18} weight="duotone" color="#C0392B" />
+              <span>Pago contraentrega</span>
+            </div>
+            <div className="w-px h-4 bg-gray-200" />
+            <div className="flex items-center gap-2 text-gray-500 text-sm">
+              <ChatCircle size={18} weight="duotone" color="#C0392B" />
+              <span>Atención personalizada</span>
             </div>
           </div>
         </div>
@@ -223,8 +204,7 @@ export default function Home() {
         <div className="max-w-[1280px] mx-auto px-6 md:px-10">
           <div className="flex items-end justify-between mb-10">
             <div>
-              <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#C0392B]">Selección</span>
-              <h2 className="text-2xl md:text-3xl font-bold text-[#1C1C1E] mt-1">Productos destacados</h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-[#1C1C1E]">Productos destacados</h2>
               <p className="text-gray-400 text-sm mt-1">Los más buscados de la temporada</p>
             </div>
             <Link to="/catalogo" className="hidden md:flex items-center gap-1 text-sm font-medium hover:opacity-80 transition-opacity" style={{ color: '#C0392B' }}>
@@ -263,13 +243,10 @@ export default function Home() {
       </section>
 
       {/* ── Paquetes ─────────────────────────────────────── */}
-      <section style={{ backgroundColor: '#1C1C1E' }} className="py-14">
+      <section id="paquetes" style={{ backgroundColor: '#1C1C1E' }} className="py-14">
         <div className="max-w-[1280px] mx-auto px-6 md:px-10">
           <div className="mb-10">
-            <span className="text-[11px] font-semibold tracking-[0.2em] uppercase" style={{ color: '#C0392B' }}>
-              Precios de paquete
-            </span>
-            <h2 className="text-2xl md:text-3xl font-bold text-white mt-1">
+            <h2 className="text-2xl md:text-3xl font-bold text-white">
               Combina modelos, ahorra más
             </h2>
             <p className="text-gray-400 text-sm mt-2 max-w-md">
@@ -320,33 +297,28 @@ export default function Home() {
       {/* ── ¿Cómo comprar? ────────────────────────────────── */}
       <section className="py-16 md:py-20" style={{ backgroundColor: '#F5F5F5' }}>
         <div className="max-w-[1280px] mx-auto px-6 md:px-10">
-          <div className="text-center mb-12">
-            <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#C0392B]">Simple y rápido</span>
-            <h2 className="text-2xl md:text-3xl font-bold text-[#1C1C1E] mt-1">¿Cómo comprar?</h2>
+          <div className="text-center mb-14">
+            <h2 className="text-2xl md:text-3xl font-bold text-[#1C1C1E]">¿Cómo comprar?</h2>
+            <p className="text-gray-400 text-sm mt-2">Simple y rápido, sin complicaciones</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {PASOS.map(paso => (
-              <div
-                key={paso.n}
-                className="relative bg-white rounded-2xl p-8 overflow-hidden group transition-shadow duration-200 hover:shadow-lg"
-              >
-                <span
-                  className="absolute -top-2 -right-1 font-black select-none leading-none pointer-events-none"
-                  style={{ fontSize: '7rem', color: '#F5F5F5', lineHeight: 1 }}
+          <div className="relative grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-0">
+            {/* Connector line — desktop only */}
+            <div
+              className="hidden md:block absolute top-7 h-px bg-gray-300"
+              style={{ left: 'calc(16.66% + 1.75rem)', right: 'calc(16.66% + 1.75rem)' }}
+            />
+
+            {PASOS.map((paso, idx) => (
+              <div key={paso.n} className="relative flex flex-col items-center text-center px-6">
+                <div
+                  className="relative z-10 w-14 h-14 rounded-full flex items-center justify-center mb-5 font-black text-lg text-white"
+                  style={{ backgroundColor: '#C0392B', boxShadow: '0 0 0 6px #F5F5F5' }}
                 >
-                  {paso.n}
-                </span>
-                <div className="relative z-10">
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center mb-5"
-                    style={{ backgroundColor: '#FEF2F1' }}
-                  >
-                    <span className="text-sm font-black" style={{ color: '#C0392B' }}>{paso.n}</span>
-                  </div>
-                  <h3 className="font-semibold text-[#1C1C1E] text-base mb-2">{paso.title}</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">{paso.desc}</p>
+                  {idx + 1}
                 </div>
+                <h3 className="font-semibold text-[#1C1C1E] text-base mb-2">{paso.title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed max-w-[200px]">{paso.desc}</p>
               </div>
             ))}
           </div>
