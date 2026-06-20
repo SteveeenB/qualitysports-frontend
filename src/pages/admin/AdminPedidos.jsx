@@ -3,6 +3,7 @@ import { todosPedidos, cualquierPedido, avanzarEstadoAdmin, reasignarAsesor } fr
 import { listarAsesores } from '../../api/admin'
 import Badge from '../../components/ui/Badge'
 import Spinner from '../../components/ui/Spinner'
+import CotizadorHeka from '../../components/shipping/CotizadorHeka'
 
 const COP = n => '$' + new Intl.NumberFormat('es-CO').format(n ?? 0)
 
@@ -22,6 +23,11 @@ const BLOQUEO_REASIGNAR = ['En despacho', 'Entregado', 'Devuelto']
 
 function DetallePedidoModal({ pedido: initialPedido, asesores, onClose, onUpdated }) {
   const [pedido, setPedido] = useState(initialPedido)
+
+  function handleGuiaGenerada(updated) {
+    setPedido(updated)
+    onUpdated()
+  }
   const [obs, setObs]       = useState('')
   const [asesorId, setAsesorId] = useState('')
   const [loading, setLoading]   = useState(false)
@@ -136,6 +142,13 @@ function DetallePedidoModal({ pedido: initialPedido, asesores, onClose, onUpdate
                 </div>
               </div>
             </div>
+
+            {/* Cotizador de envío (solo pedidos DOMICILIO) */}
+            {pedido.modalidadEntrega === 'DOMICILIO' && (
+              <div className="mt-4">
+                <CotizadorHeka pedido={pedido} onGuiaGenerada={handleGuiaGenerada} />
+              </div>
+            )}
           </div>
 
           {/* Panel derecho */}
