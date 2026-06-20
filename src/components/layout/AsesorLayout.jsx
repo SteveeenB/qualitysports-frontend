@@ -14,11 +14,22 @@ const NAV_ITEMS = [
       </svg>
     ),
   },
+  {
+    to: '/catalogo', end: false, label: 'Catálogo', external: true,
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <path d="M16 10a4 4 0 0 1-8 0"/>
+      </svg>
+    ),
+  },
 ]
 
 function getBreadcrumb(pathname) {
   if (pathname.startsWith('/asesor/pedido/')) return 'Detalle de pedido'
   if (pathname === '/asesor') return 'Pedidos'
+  if (pathname.startsWith('/catalogo')) return 'Catálogo'
   return 'Asesor'
 }
 
@@ -69,7 +80,25 @@ function Sidebar({ open, onClose, location }) {
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-0.5">
-          {NAV_ITEMS.map(item => (
+          {NAV_ITEMS.map(item => item.external ? (
+            <a
+              key={item.to}
+              href={item.to}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={onClose}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+              style={{ color: 'rgba(255,255,255,0.55)' }}
+              onMouseOver={e => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = '#FFFFFF' }}
+              onMouseOut={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.55)' }}
+            >
+              {item.icon}
+              {item.label}
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto opacity-40">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+            </a>
+          ) : (
             <NavLink
               key={item.to}
               to={item.to}

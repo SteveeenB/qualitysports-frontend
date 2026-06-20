@@ -50,6 +50,8 @@ export default function Catalogo() {
   const [totalPages, setTotalPages] = useState(1)
   const [mobileCols, setMobileCols] = useState(() => parseInt(localStorage.getItem(GRID_KEY) ?? '2'))
   const debounceRef = useRef(null)
+  const scrollRef   = useRef(null)
+  const [fadeRight, setFadeRight] = useState(false)
 
   useEffect(() => {
     listarModelos()
@@ -97,6 +99,18 @@ export default function Catalogo() {
   useEffect(() => {
     if (!query.trim()) fetchProducts('', modeloId, page)
   }, [page])
+
+  function checkFade() {
+    const el = scrollRef.current
+    if (!el) return
+    setFadeRight(el.scrollWidth > el.clientWidth + el.scrollLeft + 2)
+  }
+
+  useEffect(() => {
+    checkFade()
+    window.addEventListener('resize', checkFade)
+    return () => window.removeEventListener('resize', checkFade)
+  }, [modelos])
 
   function selectModelo(id) {
     setModeloId(id)
@@ -175,29 +189,52 @@ export default function Catalogo() {
 
         {/* Model filter — horizontal scroll on mobile, wrap on desktop */}
         {modelos.length > 0 && (
-          <div className="flex gap-2 mb-8 overflow-x-auto pb-1 -mx-1 px-1"
-               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            <motion.button
-              onClick={() => selectModelo(null)}
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.97 }}
-              className="px-4 py-2 rounded-xl border text-sm font-medium transition-colors flex-shrink-0"
-              style={{
-                backgroundColor: modeloId === null ? '#C0392B' : '#FFFFFF',
-                color: modeloId === null ? '#FFFFFF' : '#4B5563',
-                borderColor: modeloId === null ? '#C0392B' : '#E5E5E5',
-              }}
+          <div className="relative mb-8">
+            <div
+              ref={scrollRef}
+              onScroll={checkFade}
+              className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
-              Todos
-            </motion.button>
-            {modelos.map(m => (
-              <ModeloCard
-                key={m.id}
-                modelo={m}
-                isSelected={modeloId === m.id}
-                onSelect={() => selectModelo(m.id)}
-              />
-            ))}
+              <motion.button
+                onClick={() => selectModelo(null)}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.97 }}
+                className="px-4 py-2 rounded-xl border text-sm font-medium transition-colors flex-shrink-0"
+                style={{
+                  backgroundColor: modeloId === null ? '#C0392B' : '#FFFFFF',
+                  color: modeloId === null ? '#FFFFFF' : '#4B5563',
+                  borderColor: modeloId === null ? '#C0392B' : '#E5E5E5',
+                }}
+              >
+                Todos
+              </motion.button>
+              {modelos.map(m => (
+                <ModeloCard
+                  key={m.id}
+                  modelo={m}
+                  isSelected={modeloId === m.id}
+                  onSelect={() => selectModelo(m.id)}
+                />
+              ))}
+            </div>
+
+            {/* Scroll hint — mobile only */}
+            {fadeRight && (
+              <div
+                className="md:hidden absolute inset-y-0 right-0 w-14 pointer-events-none flex items-center justify-end pr-1"
+                style={{ background: 'linear-gradient(to right, transparent, #FAFAFA 70%)' }}
+              >
+                <motion.div
+                  animate={{ x: [0, 5, 0] }}
+                  transition={{ repeat: Infinity, duration: 1.1, ease: 'easeInOut' }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0392B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </motion.div>
+              </div>
+            )}
           </div>
         )}
 
