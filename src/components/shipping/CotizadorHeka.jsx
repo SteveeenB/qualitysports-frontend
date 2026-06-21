@@ -166,6 +166,7 @@ export default function CotizadorHeka({ pedido, onGuiaGenerada }) {
             <p className="text-sm font-semibold text-gray-800">{CARRIER_NAMES[pedido.transportadora] ?? pedido.transportadora}</p>
             <p className="text-xs text-gray-500">Guía: <span className="font-mono font-medium">{pedido.guia}</span></p>
             {pedido.costoEnvio && <p className="text-xs text-gray-400">Costo: {COP(pedido.costoEnvio)}</p>}
+            {pedido.hekaShipmentId && <p className="text-xs text-gray-300 mt-0.5">ID Heka: <span className="font-mono">{pedido.hekaShipmentId}</span></p>}
           </div>
           <button
             onClick={() => navigator.clipboard.writeText(pedido.guia)}
