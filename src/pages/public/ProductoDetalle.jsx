@@ -6,6 +6,7 @@ import { listarDescuentos } from '../../api/pedidos'
 import { useCart } from '../../context/CartContext'
 import SizeChips from '../../components/ui/SizeChips'
 import Spinner from '../../components/ui/Spinner'
+import { pixelViewContent } from '../../utils/metaPixel.js'
 
 function formatCOP(n) {
   return new Intl.NumberFormat('es-CO').format(n)
@@ -26,7 +27,14 @@ export default function ProductoDetalle() {
 
   useEffect(() => {
     obtenerProducto(id)
-      .then(r => setProduct(r.data))
+      .then(r => {
+        setProduct(r.data)
+        pixelViewContent({
+          productId:   r.data.id,
+          productName: r.data.nombre,
+          price:       r.data.precioBase,
+        })
+      })
       .catch(() => setError(true))
       .finally(() => setLoading(false))
 

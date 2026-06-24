@@ -1,5 +1,15 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { pixelPageView } from '../utils/metaPixel.js'
+
+function PixelPageTracker() {
+  const location = useLocation()
+  useEffect(() => {
+    pixelPageView()
+  }, [location.pathname])
+  return null
+}
 
 import Layout      from '../components/layout/Layout'
 import AdminLayout  from '../components/layout/AdminLayout'
@@ -54,6 +64,7 @@ function GuestRoute({ children }) {
 export default function AppRouter() {
   return (
     <BrowserRouter>
+      <PixelPageTracker />
       <Routes>
         {/* Públicas con layout */}
         <Route element={<Layout />}>

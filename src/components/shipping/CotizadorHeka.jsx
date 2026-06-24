@@ -21,9 +21,9 @@ const CARRIER_COLORS = {
 
 function CarrierLogo({ distributorId }) {
   const color = CARRIER_COLORS[distributorId] ?? '#6B7280'
-  const name  = CARRIER_NAMES[distributorId]  ?? distributorId
+  const name  = CARRIER_NAMES[distributorId]  ?? distributorId ?? '?'
 
-  const initials = name
+  const initials = (name || '?')
     .split(' ')
     .map(w => w[0])
     .join('')
@@ -53,6 +53,13 @@ export default function CotizadorHeka({ pedido, onGuiaGenerada }) {
   const [success, setSuccess]         = useState('')
   const [generando, setGenerando]     = useState(null)
   const debounceRef                   = useRef(null)
+
+  useEffect(() => {
+    if (pedido.cityDane) {
+      setCity({ dane: pedido.cityDane, label: pedido.municipio ?? pedido.cityDane })
+      setCityQuery(pedido.municipio ?? '')
+    }
+  }, [pedido.cityDane, pedido.municipio])
 
   useEffect(() => {
     getDefaults()
@@ -87,7 +94,7 @@ export default function CotizadorHeka({ pedido, onGuiaGenerada }) {
       setLoading(l => ({ ...l, city: true }))
       buscarCiudad(val.toUpperCase())
         .then(r => setSugg(r.data ?? []))
-        .catch(() => setSugg([]))
+        .catch(() => { setSugg([]); setError('No se pudo conectar con HekaEntrega. Verifica las credenciales.') })
         .finally(() => setLoading(l => ({ ...l, city: false })))
     }, 300)
   }

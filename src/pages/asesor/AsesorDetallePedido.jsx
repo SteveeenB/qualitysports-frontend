@@ -125,8 +125,8 @@ export default function AsesorDetallePedido() {
             </a>
           </div>
 
-          {/* Cotizador de envío (solo pedidos DOMICILIO) */}
-          {pedido.modalidadEntrega === 'DOMICILIO' && (
+          {/* Cotizador de envío */}
+          {(pedido.modalidadEntrega === 'DOMICILIO' || pedido.modalidadEntrega === 'OFICINA') && (
             <CotizadorHeka
               pedido={pedido}
               onGuiaGenerada={updated => setPedido(updated)}

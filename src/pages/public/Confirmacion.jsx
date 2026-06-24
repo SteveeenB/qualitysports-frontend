@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useLocation, Link } from 'react-router-dom'
+import { pixelPurchase } from '../../utils/metaPixel.js'
 
 function formatCOP(n) {
   return new Intl.NumberFormat('es-CO').format(n ?? 0)
@@ -10,13 +11,35 @@ export default function Confirmacion() {
   const { state }    = useLocation()
   const [show, setShow] = useState(false)
 
+  const data  = state ?? {}
+  const items = data.items ?? []
+
   useEffect(() => {
     const t = setTimeout(() => setShow(true), 80)
     return () => clearTimeout(t)
   }, [])
 
-  const data  = state ?? {}
-  const items = data.items ?? []
+  useEffect(() => {
+    if (!id) return
+
+    // Persistir metaEventId en sessionStorage para sobrevivir un refresh de página
+    const ssKey         = `qs_meta_purchase_${id}`
+    const storedEventId = sessionStorage.getItem(ssKey)
+
+    if (data.metaEventId) {
+      sessionStorage.setItem(ssKey, data.metaEventId)
+    }
+
+    const eventId   = data.metaEventId ?? storedEventId
+    const totalNeto = data.totalNeto
+    const firedKey  = `qs_purchase_fired_${id}`
+
+    // Guard: disparar el evento una sola vez por pedido (evita double-fire en StrictMode / refresh)
+    if (totalNeto != null && eventId && !sessionStorage.getItem(firedKey)) {
+      pixelPurchase({ orderId: id, value: totalNeto, eventId })
+      sessionStorage.setItem(firedKey, '1')
+    }
+  }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
   const num   = String(id).padStart(4, '0')
 
   return (

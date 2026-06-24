@@ -143,8 +143,8 @@ function DetallePedidoModal({ pedido: initialPedido, asesores, onClose, onUpdate
               </div>
             </div>
 
-            {/* Cotizador de envío (solo pedidos DOMICILIO) */}
-            {pedido.modalidadEntrega === 'DOMICILIO' && (
+            {/* Cotizador de envío */}
+            {(pedido.modalidadEntrega === 'DOMICILIO' || pedido.modalidadEntrega === 'OFICINA') && (
               <div className="mt-4">
                 <CotizadorHeka pedido={pedido} onGuiaGenerada={handleGuiaGenerada} />
               </div>

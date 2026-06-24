@@ -5,6 +5,7 @@ import { toCollageUrl } from '../../utils/imageUrl'
 import ProductCard from '../../components/ui/ProductCard'
 import Spinner from '../../components/ui/Spinner'
 import EmptyState from '../../components/ui/EmptyState'
+import { pixelSearch } from '../../utils/metaPixel.js'
 
 const GRID_KEY = 'qs_catalog_cols'
 
@@ -69,6 +70,7 @@ export default function Catalogo() {
         const data = res.data
         setProducts(Array.isArray(data) ? data : data.content ?? [])
         setTotalPages(data.totalPages ?? 1)
+        pixelSearch({ searchString: q })
       } else if (mId) {
         res = await listarProductosPorModelo(mId, p, 9)
         const data = res.data
