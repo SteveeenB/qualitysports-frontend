@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react'
+import { pixelAddToCart } from '../utils/metaPixel.js'
 
 const CartContext = createContext(null)
 
@@ -39,6 +40,11 @@ export function CartProvider({ children }) {
       return [...prev, { key, product, talla, cantidad }]
     })
     triggerToast(product, talla)
+    pixelAddToCart({
+      productId:   product.id,
+      productName: product.nombre,
+      price:       product.precioBase,
+    })
   }
 
   function updateCantidad(key, cantidad) {

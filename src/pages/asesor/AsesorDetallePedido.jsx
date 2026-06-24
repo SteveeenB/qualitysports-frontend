@@ -4,6 +4,7 @@ import { pedidoAsesor, avanzarEstadoAsesor } from '../../api/pedidos'
 import Badge from '../../components/ui/Badge'
 import Spinner from '../../components/ui/Spinner'
 import StatusChangeModal from '../../components/ui/StatusChangeModal'
+import CotizadorHeka from '../../components/shipping/CotizadorHeka'
 
 const COP = n => '$' + new Intl.NumberFormat('es-CO').format(n ?? 0)
 
@@ -123,6 +124,14 @@ export default function AsesorDetallePedido() {
               Contactar por WhatsApp
             </a>
           </div>
+
+          {/* Cotizador de envío */}
+          {(pedido.modalidadEntrega === 'DOMICILIO' || pedido.modalidadEntrega === 'OFICINA') && (
+            <CotizadorHeka
+              pedido={pedido}
+              onGuiaGenerada={updated => setPedido(updated)}
+            />
+          )}
 
           {/* Productos */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>

@@ -5,8 +5,10 @@ import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { crearPedido, listarDescuentos } from '../../api/pedidos'
 import { getPerfil } from '../../api/auth'
+import { buscarCiudad } from '../../api/heka'
 import { departamentos } from 'colombia-territorial'
 import Spinner from '../../components/ui/Spinner'
+import { pixelInitiateCheckout, getCookie } from '../../utils/metaPixel.js'
 
 function formatCOP(n) {
   return new Intl.NumberFormat('es-CO').format(n)
@@ -133,9 +135,6 @@ function calcularDescuento(subtotal, totalPares, reglas) {
 
 // ── Datos DIVIPOLA ────────────────────────────────────────────────────────────
 const DEPARTAMENTOS = departamentos.map(d => d.nombre).sort()
-const MUNICIPIOS_POR_DEP = Object.fromEntries(
-  departamentos.map(d => [d.nombre, d.municipios.map(m => m.nombre).sort()])
-)
 
 const INITIAL = {
   compradorNombre: '', compradorApellido: '', compradorCedula: '',
@@ -153,8 +152,21 @@ export default function Checkout() {
   const [loading, setLoading]   = useState(false)
   const [reglas, setReglas]     = useState([])
   const [prefilled, setPrefilled] = useState(false)
+  const [cityDane, setCityDane]       = useState(null)
+  const [citySugg, setCitySugg]       = useState([])
+  const [citySearching, setCitySearching] = useState(false)
+  const debounceRef                   = useRef(null)
 
   useEffect(() => { window.scrollTo(0, 0) }, [])
+
+  useEffect(() => {
+    if (cartItems.length > 0) {
+      pixelInitiateCheckout({
+        value:    subtotal,
+        numItems: cartItems.reduce((s, i) => s + i.cantidad, 0),
+      })
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     listarDescuentos().then(r => setReglas(r.data)).catch(() => {})
@@ -196,6 +208,30 @@ export default function Checkout() {
   function setDepartamento(dep) {
     setForm(f => ({ ...f, departamento: dep, municipio: '' }))
     setErrors(e => ({ ...e, departamento: '', municipio: '' }))
+    setCityDane(null)
+    setCitySugg([])
+  }
+
+  function onMunicipioInput(val) {
+    setForm(f => ({ ...f, municipio: val }))
+    setErrors(e => ({ ...e, municipio: '' }))
+    setCityDane(null)
+    setCitySugg([])
+    clearTimeout(debounceRef.current)
+    if (val.length < 3) return
+    setCitySearching(true)
+    debounceRef.current = setTimeout(() => {
+      buscarCiudad(val.toUpperCase())
+        .then(r => setCitySugg(r.data ?? []))
+        .catch(() => setCitySugg([]))
+        .finally(() => setCitySearching(false))
+    }, 300)
+  }
+
+  function selectCity(city) {
+    setForm(f => ({ ...f, municipio: city.label }))
+    setCityDane(city.dane)
+    setCitySugg([])
   }
 
   function validate() {
@@ -225,7 +261,13 @@ export default function Checkout() {
         cantidad: i.cantidad,
         talla: Number(i.talla),
       }))
-      const payload = { ...form, items }
+      const payload = {
+        ...form,
+        items,
+        cityDane,
+        fbp: getCookie('_fbp') ?? null,
+        fbc: getCookie('_fbc') ?? null,
+      }
       const res = await crearPedido(payload)
       clearCart()
       navigate(`/confirmacion/${res.data.pedidoId}`, { state: res.data })
@@ -239,7 +281,6 @@ export default function Checkout() {
   const totalPares   = cartItems.reduce((s, i) => s + i.cantidad, 0)
   const descuento    = calcularDescuento(subtotal, totalPares, reglas)
   const totalMostrar = descuento ? Math.round(descuento.totalNeto) : subtotal
-  const municipiosDepto = form.departamento ? (MUNICIPIOS_POR_DEP[form.departamento] || []) : []
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
@@ -321,13 +362,32 @@ export default function Checkout() {
                 <label className="block text-sm font-medium text-[#1C1C1E] mb-1.5">
                   Municipio <span className="text-[#C0392B]">*</span>
                 </label>
-                <Combobox
-                  options={municipiosDepto}
-                  value={form.municipio}
-                  onChange={v => set('municipio', v)}
-                  placeholder={form.departamento ? 'Ej. Bogotá' : 'Selecciona un departamento primero'}
-                  disabled={!form.departamento}
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={form.municipio}
+                    onChange={e => onMunicipioInput(e.target.value)}
+                    placeholder={form.departamento ? 'Escribe tu ciudad...' : 'Selecciona un departamento primero'}
+                    disabled={!form.departamento}
+                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#C0392B] disabled:bg-gray-100 disabled:text-gray-400"
+                  />
+                  {citySearching && <p className="text-xs text-gray-400 mt-1">Buscando...</p>}
+                  {citySugg.length > 0 && !cityDane && (
+                    <ul className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-52 overflow-y-auto">
+                      {citySugg.slice(0, 6).map(c => (
+                        <li
+                          key={c.dane ?? c.id}
+                          onMouseDown={() => selectCity(c)}
+                          className="px-3.5 py-2.5 text-sm cursor-pointer hover:bg-[#FEF2F1] hover:text-[#C0392B] flex justify-between items-center"
+                        >
+                          <span>{c.label}</span>
+                          <span className="text-xs text-gray-400">{c.dane}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {cityDane && <p className="text-xs text-green-600 mt-1">✓ Ciudad confirmada ({cityDane})</p>}
+                </div>
                 {errors.municipio && <p className="text-xs text-[#C0392B] mt-1">{errors.municipio}</p>}
               </div>
 

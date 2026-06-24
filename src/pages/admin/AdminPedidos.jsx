@@ -3,6 +3,7 @@ import { todosPedidos, cualquierPedido, avanzarEstadoAdmin, reasignarAsesor } fr
 import { listarAsesores } from '../../api/admin'
 import Badge from '../../components/ui/Badge'
 import Spinner from '../../components/ui/Spinner'
+import CotizadorHeka from '../../components/shipping/CotizadorHeka'
 
 const COP = n => '$' + new Intl.NumberFormat('es-CO').format(n ?? 0)
 
@@ -22,6 +23,11 @@ const BLOQUEO_REASIGNAR = ['En despacho', 'Entregado', 'Devuelto']
 
 function DetallePedidoModal({ pedido: initialPedido, asesores, onClose, onUpdated }) {
   const [pedido, setPedido] = useState(initialPedido)
+
+  function handleGuiaGenerada(updated) {
+    setPedido(updated)
+    onUpdated()
+  }
   const [obs, setObs]       = useState('')
   const [asesorId, setAsesorId] = useState('')
   const [loading, setLoading]   = useState(false)
@@ -110,10 +116,10 @@ function DetallePedidoModal({ pedido: initialPedido, asesores, onClose, onUpdate
                 {(pedido.detalles ?? []).map((d, i) => (
                   <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
                     <div>
-                      <p className="text-sm font-medium text-gray-800">{d.nombreProducto}</p>
-                      <p className="text-xs text-gray-400">Talla {d.tallaSeleccionada} · ×{d.cantidad}</p>
+                      <p className="text-sm font-medium text-gray-800">{d.productoNombre}</p>
+                      <p className="text-xs text-gray-400">Talla {d.talla} · ×{d.cantidad}</p>
                     </div>
-                    <p className="text-sm font-semibold text-gray-700">{COP(d.subtotal)}</p>
+                    <p className="text-sm font-semibold text-gray-700">{COP(d.subtotalItem)}</p>
                   </div>
                 ))}
               </div>
@@ -136,6 +142,13 @@ function DetallePedidoModal({ pedido: initialPedido, asesores, onClose, onUpdate
                 </div>
               </div>
             </div>
+
+            {/* Cotizador de envío */}
+            {(pedido.modalidadEntrega === 'DOMICILIO' || pedido.modalidadEntrega === 'OFICINA') && (
+              <div className="mt-4">
+                <CotizadorHeka pedido={pedido} onGuiaGenerada={handleGuiaGenerada} />
+              </div>
+            )}
           </div>
 
           {/* Panel derecho */}
@@ -289,7 +302,10 @@ export default function AdminPedidos() {
                     <tr key={p.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
                       <td className="px-5 py-3.5 font-mono text-xs text-gray-500">#QS-2026-{String(p.id).padStart(4,'0')}</td>
                       <td className="px-5 py-3.5 font-medium text-gray-800">{p.compradorNombre} {p.compradorApellido}</td>
-                      <td className="px-5 py-3.5 text-gray-500">{p.detalles?.length ?? 0} items</td>
+                      <td className="px-5 py-3.5 text-gray-500">
+                        {p.detalles?.length ?? 0} items
+                        {p.guia && <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-50 text-green-700">📦 Guía</span>}
+                      </td>
                       <td className="px-5 py-3.5 text-gray-500">{formatFecha(p.fecha)}</td>
                       <td className="px-5 py-3.5 text-gray-600">{p.asesorNombre ?? '—'}</td>
                       <td className="px-5 py-3.5 font-semibold text-gray-800">{COP(p.totalNeto)}</td>
