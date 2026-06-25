@@ -11,8 +11,89 @@ import Spinner from '../../components/ui/Spinner'
 const COP = n => '$' + new Intl.NumberFormat('es-CO').format(n ?? 0)
 const TALLAS = [34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45]
 const DEFAULT_TALLAS = [34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44]
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100]
 
 const EMPTY_FORM = { nombre: '', descripcion: '', precioBase: '', imagenUrl: '', modeloId: '', tallas: DEFAULT_TALLAS }
+
+// ── Dropdown de modelo con imagen ─────────────────────────────────────────────
+
+function ModeloSelect({ modelos, value, onChange }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const handler = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const selected = modelos.find(m => String(m.id) === String(value))
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-2 px-3 py-2.5 border border-gray-200 rounded-xl bg-white text-sm hover:border-gray-300 transition-colors whitespace-nowrap"
+        style={{ minWidth: '160px' }}
+      >
+        {selected ? (
+          <>
+            {selected.imagenRepresentativa
+              ? <img src={selected.imagenRepresentativa} alt={selected.nombre} className="w-6 h-6 rounded object-cover flex-shrink-0" />
+              : <span className="w-6 h-6 rounded bg-gray-200 flex-shrink-0" />
+            }
+            <span className="flex-1 text-left text-gray-800 truncate">{selected.nombre}</span>
+          </>
+        ) : (
+          <span className="flex-1 text-left text-gray-500">Todos los modelos</span>
+        )}
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute top-full left-0 mt-1 z-20 bg-white border border-gray-200 rounded-xl shadow-lg py-1" style={{ minWidth: '200px', maxHeight: '300px', overflowY: 'auto' }}>
+          <button
+            type="button"
+            onClick={() => { onChange(''); setOpen(false) }}
+            className="w-full px-3 py-2 text-sm text-left flex items-center gap-2.5 hover:bg-gray-50 transition-colors"
+          >
+            <span className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-xs flex-shrink-0">—</span>
+            <span className="text-gray-600">Todos los modelos</span>
+            {!value && (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C0392B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="ml-auto flex-shrink-0">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            )}
+          </button>
+          {modelos.map(m => (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => { onChange(String(m.id)); setOpen(false) }}
+              className="w-full px-3 py-2 text-sm text-left flex items-center gap-2.5 hover:bg-gray-50 transition-colors"
+            >
+              {m.imagenRepresentativa
+                ? <img src={m.imagenRepresentativa} alt={m.nombre} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+                : <span className="w-8 h-8 rounded-lg bg-gray-200 flex-shrink-0" />
+              }
+              <span className="text-gray-800 truncate">{m.nombre}</span>
+              {String(value) === String(m.id) && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C0392B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="ml-auto flex-shrink-0">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Modal de crear / editar producto ─────────────────────────────────────────
 
 function ProductoModal({ open, onClose, editing, modelos, onSaved }) {
   const [form, setForm]             = useState(EMPTY_FORM)
@@ -374,30 +455,48 @@ function ProductoModal({ open, onClose, editing, modelos, onSaved }) {
   )
 }
 
+// ── Página principal ──────────────────────────────────────────────────────────
+
 export default function AdminProductos() {
-  const [productos, setProductos] = useState([])
-  const [modelos, setModelos]     = useState([])
-  const [loading, setLoading]     = useState(true)
-  const [query, setQuery]           = useState('')
-  const [page, setPage]             = useState(0)
-  const [totalPages, setTotalPages] = useState(1)
-  const [modalOpen, setModalOpen]   = useState(false)
-  const [editing, setEditing]       = useState(null)
+  const [productos, setProductos]       = useState([])
+  const [modelos, setModelos]           = useState([])
+  const [loading, setLoading]           = useState(true)
+  const [query, setQuery]               = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [modeloFiltro, setModeloFiltro] = useState('')
+  const [pageSize, setPageSize]         = useState(15)
+  const [page, setPage]                 = useState(0)
+  const [totalPages, setTotalPages]     = useState(1)
+  const [totalElements, setTotalElements] = useState(0)
+  const [modalOpen, setModalOpen]       = useState(false)
+  const [editing, setEditing]           = useState(null)
+
+  // Debounce: 400ms después de que el usuario para de escribir
+  useEffect(() => {
+    const timer = setTimeout(() => { setDebouncedQuery(query); setPage(0) }, 400)
+    return () => clearTimeout(timer)
+  }, [query])
 
   const fetchProductos = useCallback(async (p = 0) => {
     setLoading(true)
     try {
-      const res = await listarProductosAdmin(p, 15)
+      const res = await listarProductosAdmin(p, pageSize, debouncedQuery || null, modeloFiltro || null)
       setProductos(res.data.content ?? [])
       setTotalPages(res.data.totalPages ?? 1)
+      setTotalElements(res.data.totalElements ?? 0)
     } catch {}
     finally { setLoading(false) }
+  }, [pageSize, debouncedQuery, modeloFiltro])
+
+  // Cargar modelos una sola vez
+  useEffect(() => {
+    listarModelos().then(r => setModelos(r.data)).catch(() => {})
   }, [])
 
+  // Disparar fetch cuando cambia la página o los filtros (fetchProductos cambia cuando cambian sus deps)
   useEffect(() => {
     fetchProductos(page)
-    listarModelos().then(r => setModelos(r.data)).catch(() => {})
-  }, [page])
+  }, [page, fetchProductos])
 
   function openCreate() { setEditing(null); setModalOpen(true) }
   function openEdit(p)  { setEditing(p);    setModalOpen(true) }
@@ -410,9 +509,9 @@ export default function AdminProductos() {
     catch { setProductos(prev => prev.map(x => x.id === p.id ? { ...x, activo: p.activo } : x)) }
   }
 
-  const filtered = productos.filter(p =>
-    p.nombre.toLowerCase().includes(query.toLowerCase())
-  )
+  // Rango visible para mostrar en paginación
+  const rangoDesde = totalElements === 0 ? 0 : page * pageSize + 1
+  const rangoHasta = Math.min((page + 1) * pageSize, totalElements)
 
   return (
     <div className="p-4 md:p-8">
@@ -434,18 +533,41 @@ export default function AdminProductos() {
         </button>
       </div>
 
-      {/* Buscador */}
-      <div className="relative mb-5">
-        <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
-        </svg>
-        <input
-          type="text" value={query} onChange={e => setQuery(e.target.value)}
-          placeholder="Buscar producto..."
-          className="w-full max-w-sm pl-10 pr-4 py-2.5 text-sm bg-white rounded-xl border border-gray-200 focus:outline-none"
+      {/* Barra de filtros */}
+      <div className="flex flex-wrap items-center gap-3 mb-5">
+        {/* Buscador */}
+        <div className="relative flex-1" style={{ minWidth: '200px', maxWidth: '340px' }}>
+          <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <input
+            type="text" value={query} onChange={e => setQuery(e.target.value)}
+            placeholder="Buscar producto..."
+            className="w-full pl-10 pr-4 py-2.5 text-sm bg-white rounded-xl border border-gray-200 focus:outline-none"
+            onFocus={e => e.target.style.borderColor = '#C0392B'}
+            onBlur={e => e.target.style.borderColor = '#E5E7EB'}
+          />
+        </div>
+
+        {/* Filtro por modelo con imagen */}
+        <ModeloSelect
+          modelos={modelos}
+          value={modeloFiltro}
+          onChange={v => { setModeloFiltro(v); setPage(0) }}
+        />
+
+        {/* Productos por página */}
+        <select
+          value={pageSize}
+          onChange={e => { setPageSize(Number(e.target.value)); setPage(0) }}
+          className="px-3 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none hover:border-gray-300 transition-colors"
           onFocus={e => e.target.style.borderColor = '#C0392B'}
           onBlur={e => e.target.style.borderColor = '#E5E7EB'}
-        />
+        >
+          {PAGE_SIZE_OPTIONS.map(n => (
+            <option key={n} value={n}>{n} por página</option>
+          ))}
+        </select>
       </div>
 
       {/* Tabla */}
@@ -465,7 +587,7 @@ export default function AdminProductos() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map(p => (
+                  {productos.map(p => (
                     <tr key={p.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-3.5">
                         <div className="flex items-center gap-3">
@@ -516,7 +638,7 @@ export default function AdminProductos() {
                       </td>
                     </tr>
                   ))}
-                  {filtered.length === 0 && (
+                  {productos.length === 0 && (
                     <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-400">No hay productos</td></tr>
                   )}
                 </tbody>
@@ -525,9 +647,9 @@ export default function AdminProductos() {
 
             {/* Mobile cards */}
             <div className="md:hidden divide-y divide-gray-50">
-              {filtered.length === 0 ? (
+              {productos.length === 0 ? (
                 <p className="px-4 py-10 text-center text-sm text-gray-400">No hay productos</p>
-              ) : filtered.map(p => (
+              ) : productos.map(p => (
                 <div key={p.id} className="p-4 flex items-center gap-3">
                   <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
                     {p.imagenUrl
@@ -559,15 +681,33 @@ export default function AdminProductos() {
             </div>
 
             {/* Paginación */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between px-4 md:px-6 py-4 border-t border-gray-100">
-                <p className="text-xs text-gray-400">Página {page + 1} de {totalPages}</p>
-                <div className="flex gap-2">
-                  <button disabled={page === 0} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors">Anterior</button>
-                  <button disabled={page === totalPages - 1} onClick={() => setPage(p => p + 1)} className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors">Siguiente</button>
-                </div>
+            <div className="flex items-center justify-between px-4 md:px-6 py-4 border-t border-gray-100">
+              <p className="text-xs text-gray-400">
+                {totalElements === 0
+                  ? 'Sin resultados'
+                  : `Mostrando ${rangoDesde}–${rangoHasta} de ${totalElements} productos`
+                }
+              </p>
+              <div className="flex gap-2">
+                <button
+                  disabled={page === 0}
+                  onClick={() => setPage(p => p - 1)}
+                  className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors"
+                >
+                  Anterior
+                </button>
+                <span className="px-3 py-1.5 text-xs text-gray-500">
+                  {page + 1} / {totalPages}
+                </span>
+                <button
+                  disabled={page >= totalPages - 1}
+                  onClick={() => setPage(p => p + 1)}
+                  className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors"
+                >
+                  Siguiente
+                </button>
               </div>
-            )}
+            </div>
           </>
         )}
       </div>

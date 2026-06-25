@@ -10,7 +10,12 @@ export const listarCategorias        = ()                    => api.get('/api/ca
 export const listarModelos           = ()                    => api.get('/api/modelos')
 
 // ── Rutas admin — productos ───────────────────────────────────────────────────
-export const listarProductosAdmin  = (page = 0, size = 20) => api.get('/api/admin/productos',               { params: { page, size } })
+export const listarProductosAdmin  = (page = 0, size = 15, buscar = null, modeloId = null) => {
+  const params = { page, size }
+  if (buscar) params.buscar = buscar
+  if (modeloId) params.modeloId = modeloId
+  return api.get('/api/admin/productos', { params })
+}
 export const crearProducto         = (data)                 => api.post('/api/admin/productos',               data)
 export const actualizarProducto    = (id, data)             => api.put(`/api/admin/productos/${id}`,         data)
 export const cambiarEstadoProducto = (id, activo)           => api.patch(`/api/admin/productos/${id}/estado`, { activo })
