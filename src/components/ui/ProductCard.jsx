@@ -101,7 +101,7 @@ export default function ProductCard({ product, compact = false, featured = false
 
   return (
     <div
-      className="group bg-white overflow-hidden flex flex-col transition-all duration-200 hover:-translate-y-1 h-full"
+      className="group bg-white flex flex-col transition-all duration-200 hover:-translate-y-1 h-full"
       style={{
         borderRadius: '16px',
         border: '1px solid #EBEBEB',
@@ -113,7 +113,7 @@ export default function ProductCard({ product, compact = false, featured = false
       {/* Image */}
       <Link
         to={`/producto/${product.id}`}
-        className="block overflow-hidden flex-shrink-0 flex items-center justify-center p-4"
+        className="block overflow-hidden rounded-t-2xl flex-shrink-0 flex items-center justify-center p-4"
         style={{
           backgroundColor: '#F7F7F7',
           aspectRatio: featured ? '16/10' : '1',
