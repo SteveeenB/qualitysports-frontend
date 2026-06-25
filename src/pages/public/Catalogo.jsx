@@ -8,6 +8,7 @@ import EmptyState from '../../components/ui/EmptyState'
 import { pixelSearch } from '../../utils/metaPixel.js'
 
 const GRID_KEY = 'qs_catalog_cols'
+const PAGE_SIZE_OPTIONS = [9, 18, 36]
 
 function ModeloCard({ modelo, isSelected, onSelect }) {
   return (
@@ -49,6 +50,7 @@ export default function Catalogo() {
   const [modeloId, setModeloId] = useState(null)
   const [page, setPage]         = useState(0)
   const [totalPages, setTotalPages] = useState(1)
+  const [pageSize, setPageSize] = useState(9)
   const [mobileCols, setMobileCols] = useState(() => parseInt(localStorage.getItem(GRID_KEY) ?? '2'))
   const debounceRef = useRef(null)
   const scrollRef   = useRef(null)
@@ -60,7 +62,7 @@ export default function Catalogo() {
       .catch(() => {})
   }, [])
 
-  const fetchProducts = useCallback(async (q, mId, p) => {
+  const fetchProducts = useCallback(async (q, mId, p, size) => {
     setLoading(true)
     setError(false)
     try {
@@ -72,12 +74,12 @@ export default function Catalogo() {
         setTotalPages(data.totalPages ?? 1)
         pixelSearch({ searchString: q })
       } else if (mId) {
-        res = await listarProductosPorModelo(mId, p, 9)
+        res = await listarProductosPorModelo(mId, p, size)
         const data = res.data
         setProducts(data.content ?? [])
         setTotalPages(data.totalPages ?? 1)
       } else {
-        res = await listarProductos(p, 9)
+        res = await listarProductos(p, size)
         const data = res.data
         setProducts(data.content ?? [])
         setTotalPages(data.totalPages ?? 1)
@@ -92,15 +94,15 @@ export default function Catalogo() {
   useEffect(() => {
     clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
-      fetchProducts(query, modeloId, 0)
+      fetchProducts(query, modeloId, 0, pageSize)
       setPage(0)
     }, 300)
     return () => clearTimeout(debounceRef.current)
-  }, [query, modeloId, fetchProducts])
+  }, [query, modeloId, pageSize, fetchProducts])
 
   useEffect(() => {
-    if (!query.trim()) fetchProducts('', modeloId, page)
-  }, [page])
+    if (!query.trim()) fetchProducts('', modeloId, page, pageSize)
+  }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function checkFade() {
     const el = scrollRef.current
@@ -148,7 +150,7 @@ export default function Catalogo() {
 
       <div className="max-w-[1280px] mx-auto px-6 md:px-10 py-8">
 
-        {/* Search + toggle */}
+        {/* Search + controls */}
         <div className="flex gap-3 mb-5">
           <div className="relative flex-1">
             <svg
@@ -168,6 +170,20 @@ export default function Catalogo() {
               onBlur={e => e.target.style.borderColor = '#E5E5E5'}
             />
           </div>
+
+          {/* Page size selector */}
+          <select
+            value={pageSize}
+            onChange={e => { setPageSize(Number(e.target.value)); setPage(0) }}
+            className="flex-shrink-0 px-3 py-2.5 text-sm bg-white transition-colors focus:outline-none hover:border-gray-300 cursor-pointer"
+            style={{ border: '1px solid #E5E5E5', borderRadius: '12px' }}
+            onFocus={e => e.target.style.borderColor = '#C0392B'}
+            onBlur={e => e.target.style.borderColor = '#E5E5E5'}
+          >
+            {PAGE_SIZE_OPTIONS.map(n => (
+              <option key={n} value={n}>{n} por página</option>
+            ))}
+          </select>
 
           {/* Mobile col toggle */}
           <button
