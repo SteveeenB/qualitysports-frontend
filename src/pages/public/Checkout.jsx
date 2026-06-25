@@ -5,8 +5,7 @@ import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { crearPedido, listarDescuentos } from '../../api/pedidos'
 import { getPerfil } from '../../api/auth'
-import { buscarCiudad } from '../../api/heka'
-import { departamentos } from 'colombia-territorial'
+import { departamentos, getMunicipios } from 'colombia-territorial'
 import Spinner from '../../components/ui/Spinner'
 import { pixelInitiateCheckout, getCookie } from '../../utils/metaPixel.js'
 
@@ -152,10 +151,7 @@ export default function Checkout() {
   const [loading, setLoading]   = useState(false)
   const [reglas, setReglas]     = useState([])
   const [prefilled, setPrefilled] = useState(false)
-  const [cityDane, setCityDane]       = useState(null)
-  const [citySugg, setCitySugg]       = useState([])
-  const [citySearching, setCitySearching] = useState(false)
-  const debounceRef                   = useRef(null)
+  const [cityDane, setCityDane] = useState(null)
 
   useEffect(() => { window.scrollTo(0, 0) }, [])
 
@@ -209,29 +205,14 @@ export default function Checkout() {
     setForm(f => ({ ...f, departamento: dep, municipio: '' }))
     setErrors(e => ({ ...e, departamento: '', municipio: '' }))
     setCityDane(null)
-    setCitySugg([])
   }
 
-  function onMunicipioInput(val) {
-    setForm(f => ({ ...f, municipio: val }))
+  function setMunicipio(nombre) {
+    setForm(f => ({ ...f, municipio: nombre }))
     setErrors(e => ({ ...e, municipio: '' }))
-    setCityDane(null)
-    setCitySugg([])
-    clearTimeout(debounceRef.current)
-    if (val.length < 3) return
-    setCitySearching(true)
-    debounceRef.current = setTimeout(() => {
-      buscarCiudad(val.toUpperCase())
-        .then(r => setCitySugg(r.data ?? []))
-        .catch(() => setCitySugg([]))
-        .finally(() => setCitySearching(false))
-    }, 300)
-  }
-
-  function selectCity(city) {
-    setForm(f => ({ ...f, municipio: city.label }))
-    setCityDane(city.dane)
-    setCitySugg([])
+    if (!nombre) { setCityDane(null); return }
+    const muni = getMunicipios(form.departamento).find(m => m.nombre === nombre)
+    setCityDane(muni ? muni.codigo_dane + '000' : null)
   }
 
   function validate() {
@@ -244,6 +225,7 @@ export default function Checkout() {
     else if (!/\S+@\S+\.\S+/.test(form.compradorEmail)) e.compradorEmail = 'Correo inválido'
     if (!form.departamento.trim()) e.departamento = 'Requerido'
     if (!form.municipio.trim())    e.municipio    = 'Requerido'
+    else if (!cityDane)            e.municipio    = 'Selecciona un municipio de la lista'
     if (form.modalidadEntrega === 'DOMICILIO') {
       if (!form.direccionEnvio.trim()) e.direccionEnvio = 'Requerido'
     }
@@ -362,32 +344,18 @@ export default function Checkout() {
                 <label className="block text-sm font-medium text-[#1C1C1E] mb-1.5">
                   Municipio <span className="text-[#C0392B]">*</span>
                 </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={form.municipio}
-                    onChange={e => onMunicipioInput(e.target.value)}
-                    placeholder={form.departamento ? 'Escribe tu ciudad...' : 'Selecciona un departamento primero'}
-                    disabled={!form.departamento}
-                    className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#C0392B] disabled:bg-gray-100 disabled:text-gray-400"
-                  />
-                  {citySearching && <p className="text-xs text-gray-400 mt-1">Buscando...</p>}
-                  {citySugg.length > 0 && !cityDane && (
-                    <ul className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-52 overflow-y-auto">
-                      {citySugg.slice(0, 6).map(c => (
-                        <li
-                          key={c.dane ?? c.id}
-                          onMouseDown={() => selectCity(c)}
-                          className="px-3.5 py-2.5 text-sm cursor-pointer hover:bg-[#FEF2F1] hover:text-[#C0392B] flex justify-between items-center"
-                        >
-                          <span>{c.label}</span>
-                          <span className="text-xs text-gray-400">{c.dane}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {cityDane && <p className="text-xs text-green-600 mt-1">✓ Ciudad confirmada ({cityDane})</p>}
-                </div>
+                <Combobox
+                  options={form.departamento
+                    ? getMunicipios(form.departamento)
+                        .sort((a, b) => a.nombre.localeCompare(b.nombre))
+                        .map(m => m.nombre)
+                    : []
+                  }
+                  value={form.municipio}
+                  onChange={setMunicipio}
+                  placeholder={form.departamento ? 'Buscar municipio...' : 'Selecciona un departamento primero'}
+                  disabled={!form.departamento}
+                />
                 {errors.municipio && <p className="text-xs text-[#C0392B] mt-1">{errors.municipio}</p>}
               </div>
 
