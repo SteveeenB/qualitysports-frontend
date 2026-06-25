@@ -36,6 +36,7 @@ export default function MiPerfil() {
   const { updateUser } = useAuth()
 
   const [loading, setLoading]     = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [nombre, setNombre]       = useState('')
   const [telefono, setTelefono]   = useState('')
   const [direccion, setDireccion] = useState('')
@@ -55,7 +56,7 @@ export default function MiPerfil() {
         setTelefono(r.data.telefono ?? '')
         setDireccion(r.data.direccionEnvio ?? '')
       })
-      .catch(() => {})
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false))
   }, [])
 
@@ -100,6 +101,15 @@ export default function MiPerfil() {
 
   if (loading) {
     return <div className="flex justify-center py-32"><Spinner size="lg" /></div>
+  }
+
+  if (loadError) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-20 text-center">
+        <p className="text-gray-500 text-sm mb-1">No pudimos cargar tu perfil.</p>
+        <p className="text-gray-400 text-xs">Intenta recargar la página.</p>
+      </div>
+    )
   }
 
   return (

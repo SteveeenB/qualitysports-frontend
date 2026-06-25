@@ -148,7 +148,8 @@ export default function Checkout() {
   const navigate = useNavigate()
   const [form, setForm]         = useState(INITIAL)
   const [errors, setErrors]     = useState({})
-  const [loading, setLoading]   = useState(false)
+  const [loading, setLoading]     = useState(false)
+  const [submitError, setSubmitError] = useState('')
   const [reglas, setReglas]     = useState([])
   const [prefilled, setPrefilled] = useState(false)
   const [cityDane, setCityDane] = useState(null)
@@ -253,8 +254,8 @@ export default function Checkout() {
       const res = await crearPedido(payload)
       clearCart()
       navigate(`/confirmacion/${res.data.pedidoId}`, { state: res.data })
-    } catch {
-      alert('Error al crear el pedido. Intenta de nuevo.')
+    } catch (err) {
+      setSubmitError(err.response?.data?.message ?? 'Error al crear el pedido. Intenta de nuevo.')
     } finally {
       setLoading(false)
     }
@@ -436,6 +437,12 @@ export default function Checkout() {
               <div className="mb-4 rounded-xl px-4 py-3 text-sm font-semibold" style={{ backgroundColor: '#FEF2F1', color: '#C0392B' }}>
                 Ahorrarás ${formatCOP(Math.round(descuento.ahorro))} COP con el precio de paquete
               </div>
+            )}
+
+            {submitError && (
+              <p className="mb-3 text-sm text-[#C0392B] bg-red-50 border border-red-100 rounded-xl px-4 py-2.5 text-center">
+                {submitError}
+              </p>
             )}
 
             <button

@@ -13,12 +13,16 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    const status = error.response?.status
     const isAuthEndpoint = error.config?.url?.includes('/api/auth/')
-    if (error.response?.status === 401 && !isAuthEndpoint) {
+
+    if (status === 401 && !isAuthEndpoint) {
+      const hadSession = !!localStorage.getItem('qs_token')
       localStorage.removeItem('qs_token')
       localStorage.removeItem('qs_user')
-      window.location.href = '/login'
+      window.location.href = hadSession ? '/login?razon=sesion_expirada' : '/login'
     }
+
     return Promise.reject(error)
   }
 )

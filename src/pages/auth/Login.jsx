@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { login as loginApi } from '../../api/auth'
 import { useAuth } from '../../context/AuthContext'
 import Spinner from '../../components/ui/Spinner'
@@ -8,6 +8,8 @@ import Logo from '../../components/ui/Logo'
 export default function Login() {
   const { login } = useAuth()
   const navigate  = useNavigate()
+  const [searchParams] = useSearchParams()
+  const sessionExpired = searchParams.get('razon') === 'sesion_expirada'
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [error, setError]       = useState('')
@@ -24,8 +26,8 @@ export default function Login() {
       if (data.role === 'ADMINISTRADOR') navigate('/admin')
       else if (data.role === 'ASESOR_VENTAS') navigate('/asesor')
       else navigate('/')
-    } catch {
-      setError('Correo o contraseña incorrectos')
+    } catch (err) {
+      setError(err.response?.data?.message ?? 'Correo o contraseña incorrectos')
     } finally {
       setLoading(false)
     }
@@ -36,6 +38,12 @@ export default function Login() {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
         {/* Logo */}
         <Logo to="/" src="/logo.jpeg" linkClassName="flex items-center justify-center mb-7" />
+
+        {sessionExpired && (
+          <div className="mb-5 px-4 py-3 bg-amber-50 border border-amber-100 rounded-xl text-amber-800 text-sm text-center">
+            Tu sesión ha expirado. Inicia sesión nuevamente.
+          </div>
+        )}
 
         <h1 className="text-xl font-bold text-[#1C1C1E] text-center mb-1">Bienvenido de nuevo</h1>
         <p className="text-gray-400 text-sm text-center mb-7">Inicia sesión para continuar</p>

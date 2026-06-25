@@ -12,11 +12,12 @@ function formatCOP(n) {
 export default function MisPedidos() {
   const [pedidos, setPedidos] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState(false)
 
   useEffect(() => {
     misPedidos()
       .then(r => setPedidos(r.data))
-      .catch(() => {})
+      .catch(() => setError(true))
       .finally(() => setLoading(false))
   }, [])
 
@@ -29,6 +30,11 @@ export default function MisPedidos() {
 
       {loading ? (
         <div className="flex justify-center py-20"><Spinner size="lg" /></div>
+      ) : error ? (
+        <div className="text-center py-16">
+          <p className="text-gray-500 text-sm mb-2">No pudimos cargar tus pedidos.</p>
+          <p className="text-gray-400 text-xs">Intenta recargar la página.</p>
+        </div>
       ) : pedidos.length === 0 ? (
         <EmptyState
           icon="📋"
