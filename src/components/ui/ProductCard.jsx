@@ -1,9 +1,89 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
 
 function formatCOP(price) {
   return new Intl.NumberFormat('es-CO').format(price)
+}
+
+function SizeSelect({ tallas, value, onChange }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    function onOutside(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onOutside)
+    return () => document.removeEventListener('mousedown', onOutside)
+  }, [])
+
+  const sorted = [...tallas].sort((a, b) => {
+    const na = Number(a), nb = Number(b)
+    return !isNaN(na) && !isNaN(nb) ? na - nb : String(a).localeCompare(String(b))
+  })
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between px-3 py-2 text-sm rounded-xl transition-colors duration-150"
+        style={{
+          border: open ? '1.5px solid #C0392B' : '1.5px solid #E5E5E5',
+          backgroundColor: '#fff',
+          color: value != null ? '#1C1C1E' : '#9CA3AF',
+        }}
+      >
+        <span className={value != null ? 'font-medium' : ''}>
+          {value != null ? `Talla ${value}` : 'Elige tu talla'}
+        </span>
+        <svg
+          width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+          className="flex-shrink-0 ml-1 transition-transform duration-200"
+          style={{
+            transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+            color: open ? '#C0392B' : '#9CA3AF',
+          }}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          className="absolute left-0 right-0 z-20 mt-1 bg-white overflow-hidden"
+          style={{
+            borderRadius: '12px',
+            border: '1px solid #EBEBEB',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.10)',
+          }}
+        >
+          {sorted.map(t => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => { onChange(t); setOpen(false) }}
+              className="w-full flex items-center justify-between px-3 py-2 text-sm text-left transition-colors duration-100 hover:bg-gray-50"
+              style={{
+                color: value === t ? '#C0392B' : '#1C1C1E',
+                fontWeight: value === t ? 600 : 400,
+              }}
+            >
+              <span>Talla {t}</span>
+              {value === t && (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                  stroke="#C0392B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function ProductCard({ product, compact = false, featured = false }) {
@@ -76,25 +156,13 @@ export default function ProductCard({ product, compact = false, featured = false
           </div>
         </div>
 
-        {/* Tallas */}
+        {/* Size selector */}
         {!compact && product.tallasDisponibles?.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {[...product.tallasDisponibles].sort((a, b) => a - b).map(t => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setTalla(prev => prev === t ? null : t)}
-                className="w-8 h-8 rounded-lg text-xs font-medium transition-all"
-                style={{
-                  border: talla === t ? '1px solid #C0392B' : '1px solid #E5E5E5',
-                  backgroundColor: talla === t ? '#C0392B' : '#FFFFFF',
-                  color: talla === t ? '#FFFFFF' : '#4B5563',
-                }}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
+          <SizeSelect
+            tallas={product.tallasDisponibles}
+            value={talla}
+            onChange={setTalla}
+          />
         )}
 
         {/* CTA */}
