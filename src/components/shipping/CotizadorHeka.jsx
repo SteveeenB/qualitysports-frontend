@@ -190,6 +190,7 @@ export default function CotizadorHeka({ pedido, onGuiaGenerada }) {
   const [selectedCity, setCity]     = useState(null)
   const [dims, setDims]             = useState(null)
   const [cotizaciones, setCotiz]    = useState([])
+  const [tipoEntrega, setTipo]      = useState('domicilio') // 'domicilio' | 'oficina'
   const [loading, setLoading]       = useState({ defaults: true, city: false, quote: false })
   const [error, setError]           = useState('')
   const debounceRef                 = useRef(null)
@@ -256,7 +257,6 @@ export default function CotizadorHeka({ pedido, onGuiaGenerada }) {
       if (!r.data?.length) {
         setError('No se encontraron cotizaciones para ese destino.')
       } else {
-        // ordenar por lo que le llega al vendedor (mayor primero = mejor negocio)
         setCotiz([...r.data].sort((a, b) => (b.valueDeposited ?? 0) - (a.valueDeposited ?? 0)))
       }
     } catch {
@@ -399,6 +399,34 @@ export default function CotizadorHeka({ pedido, onGuiaGenerada }) {
         </div>
       )}
 
+      {/* Toggle domicilio / oficina */}
+      <div className="mb-4">
+        <label className="block text-xs font-medium text-gray-600 mb-1.5">Tipo de entrega al cliente</label>
+        <div className="flex rounded-xl border border-gray-200 overflow-hidden text-sm font-medium">
+          {[
+            { key: 'domicilio', label: '🏠 A domicilio' },
+            { key: 'oficina',   label: '🏪 En oficina' },
+          ].map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => { setTipo(key); setCotiz([]) }}
+              className="flex-1 py-2 transition-colors"
+              style={{
+                backgroundColor: tipoEntrega === key ? '#C0392B' : 'transparent',
+                color: tipoEntrega === key ? '#fff' : '#6B7280',
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {tipoEntrega === 'oficina' && (
+          <p className="text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded-lg mt-2">
+            En modo oficina solo se muestran transportadoras que permiten retiro en sucursal. Coordinadora queda excluida.
+          </p>
+        )}
+      </div>
+
       {/* Botón cotizar */}
       <button
         onClick={handleCotizar}
@@ -416,24 +444,35 @@ export default function CotizadorHeka({ pedido, onGuiaGenerada }) {
       )}
 
       {/* Tarjetas de cotización */}
-      {cotizaciones.length > 0 && (
-        <div>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
-            {cotizaciones.length} opción{cotizaciones.length !== 1 ? 'es' : ''} — ordenadas por mayor consignación
-          </p>
-          <div className="space-y-3">
-            {cotizaciones.map(c => (
-              <CarrierCard
-                key={c.distributorId}
-                c={c}
-                selectedCity={selectedCity}
-                dims={dims}
-                onGuiaGenerada={onGuiaGenerada}
-              />
-            ))}
+      {cotizaciones.length > 0 && (() => {
+        const visibles = tipoEntrega === 'oficina'
+          ? cotizaciones.filter(c => !c.onlyToAddress)
+          : cotizaciones
+        return (
+          <div>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+              {visibles.length} opción{visibles.length !== 1 ? 'es' : ''} — ordenadas por mayor consignación
+            </p>
+            {visibles.length === 0 ? (
+              <p className="text-xs text-gray-500 bg-gray-50 px-3 py-3 rounded-xl text-center">
+                Ninguna transportadora disponible para retiro en oficina en este destino.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {visibles.map(c => (
+                  <CarrierCard
+                    key={c.distributorId}
+                    c={c}
+                    selectedCity={selectedCity}
+                    dims={dims}
+                    onGuiaGenerada={onGuiaGenerada}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
