@@ -89,6 +89,15 @@ export default function Register() {
           >
             {loading ? <><Spinner size="sm" /> Registrando...</> : 'Registrarse'}
           </button>
+
+          <p className="text-xs text-gray-400 text-center leading-relaxed">
+            Al registrarte, Quality Sports tratará tu nombre y correo electrónico para gestionar tu cuenta,
+            conforme a nuestra{' '}
+            <Link to="/politica-privacidad" className="underline hover:text-gray-600">
+              Política de Tratamiento de Datos
+            </Link>
+            {' '}(Ley 1581 de 2012).
+          </p>
         </form>
 
         <p className="text-sm text-gray-500 text-center mt-6">

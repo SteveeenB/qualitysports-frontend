@@ -167,6 +167,33 @@ export default function MiPerfil() {
             {savingPw ? 'Actualizando...' : 'Cambiar contraseña'}
           </button>
         </form>
+
+        {/* Derechos sobre mis datos — Ley 1581 */}
+        <div
+          className="bg-white border rounded-2xl p-5 space-y-3"
+          style={{ borderColor: '#FCA5A5', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
+        >
+          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#B91C1C' }}>
+            Mis datos personales
+          </p>
+          <p className="text-xs text-gray-500 leading-relaxed">
+            Tienes derecho a acceder, corregir u oponerte al tratamiento de tus datos personales
+            (Ley 1581 de 2012). Para solicitar la <strong>eliminación de tu cuenta y datos</strong>,
+            envíanos un correo — respondemos dentro de los 15 días hábiles siguientes.
+          </p>
+          <a
+            href={`mailto:qualitysports414@gmail.com?subject=${encodeURIComponent('Solicitud de eliminación de datos personales')}&body=${encodeURIComponent('Hola,\n\nSolicito la eliminación de mi cuenta y todos mis datos personales de la plataforma Quality Sports, de acuerdo con la Ley 1581 de 2012.\n\nCorreo de mi cuenta: [escribe tu correo aquí]\n\nGracias.')}`}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-colors"
+            style={{ borderColor: '#FCA5A5', color: '#B91C1C', backgroundColor: '#FEF2F2' }}
+            onMouseOver={e => { e.currentTarget.style.backgroundColor = '#FEE2E2' }}
+            onMouseOut={e => { e.currentTarget.style.backgroundColor = '#FEF2F2' }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+            Solicitar eliminación de mi cuenta
+          </a>
+        </div>
       </div>
     </div>
   )
