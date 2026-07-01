@@ -40,7 +40,9 @@ import AdminAsesores   from '../pages/admin/AdminAsesores'
 import AdminDescuentos from '../pages/admin/AdminDescuentos'
 import AdminModelos    from '../pages/admin/AdminModelos'
 
+import PoliticaPrivacidad from '../pages/public/PoliticaPrivacidad'
 import Acceso403 from '../pages/Acceso403'
+import CookieConsentBanner from '../components/CookieConsentBanner'
 
 function PrivateRoute({ children, roles }) {
   const { user, loading } = useAuth()
@@ -65,6 +67,7 @@ export default function AppRouter() {
   return (
     <BrowserRouter>
       <PixelPageTracker />
+      <CookieConsentBanner />
       <Routes>
         {/* Públicas con layout */}
         <Route element={<Layout />}>
@@ -72,8 +75,9 @@ export default function AppRouter() {
           <Route path="/catalogo"            element={<Catalogo />} />
           <Route path="/producto/:id"        element={<ProductoDetalle />} />
           <Route path="/carrito"             element={<Carrito />} />
-          <Route path="/checkout"            element={<Checkout />} />
+          <Route path="/checkout"              element={<Checkout />} />
           <Route path="/confirmacion/:id"    element={<Confirmacion />} />
+          <Route path="/politica-privacidad" element={<PoliticaPrivacidad />} />
           <Route path="/mis-pedidos"         element={<PrivateRoute roles={['CLIENTE']}><MisPedidos /></PrivateRoute>} />
           <Route path="/mis-pedidos/:id"    element={<PrivateRoute roles={['CLIENTE']}><MisPedidoDetalle /></PrivateRoute>} />
           <Route path="/mi-perfil"          element={<PrivateRoute roles={['CLIENTE']}><MiPerfil /></PrivateRoute>} />

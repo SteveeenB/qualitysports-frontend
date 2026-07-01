@@ -153,6 +153,9 @@ export default function Checkout() {
   const [reglas, setReglas]     = useState([])
   const [prefilled, setPrefilled] = useState(false)
   const [cityDane, setCityDane] = useState(null)
+  const [consentDatos, setConsentDatos]         = useState(false)
+  const [consentMarketing, setConsentMarketing] = useState(false)
+  const [consentError, setConsentError]         = useState('')
 
   useEffect(() => { window.scrollTo(0, 0) }, [])
 
@@ -237,6 +240,11 @@ export default function Checkout() {
   async function handleSubmit(e) {
     e.preventDefault()
     if (!validate()) return
+    if (!consentDatos) {
+      setConsentError('Debes autorizar el tratamiento de tus datos para continuar.')
+      return
+    }
+    setConsentError('')
     setLoading(true)
     try {
       const items = cartItems.map(i => ({
@@ -250,6 +258,8 @@ export default function Checkout() {
         cityDane,
         fbp: getCookie('_fbp') ?? null,
         fbc: getCookie('_fbc') ?? null,
+        consentimientoDatos: consentDatos,
+        consentimientoMarketing: consentMarketing,
       }
       const res = await crearPedido(payload)
       clearCart()
@@ -378,6 +388,51 @@ export default function Checkout() {
               <p className="text-sm text-amber-800">
                 <strong>Pago contraentrega.</strong> El asesor confirmará tu pedido vía WhatsApp antes del despacho.
               </p>
+            </div>
+
+            {/* Autorización Ley 1581 */}
+            <div className="mt-5 border border-gray-200 rounded-xl p-4 space-y-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Autorización de datos — Ley 1581 de 2012</p>
+
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={consentDatos}
+                  onChange={e => { setConsentDatos(e.target.checked); setConsentError('') }}
+                  className="mt-0.5 flex-shrink-0 accent-[#C0392B] w-4 h-4"
+                />
+                <span className="text-xs text-gray-600 leading-relaxed">
+                  <strong className="text-[#1C1C1E]">*</strong> Autorizo a Quality Sports el tratamiento de mis datos personales
+                  (nombre, cédula, teléfono, correo y dirección) para el procesamiento del pedido, entrega y servicio al cliente.
+                  Mis datos podrán ser compartidos con la transportadora Heka para la guía de envío. Conozco y acepto la{' '}
+                  <a
+                    href="/politica-privacidad"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline font-medium"
+                    style={{ color: '#C0392B' }}
+                  >
+                    Política de Tratamiento de Datos
+                  </a>.
+                </span>
+              </label>
+
+              {consentError && (
+                <p className="text-xs text-[#C0392B] bg-red-50 rounded-lg px-3 py-2">{consentError}</p>
+              )}
+
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={consentMarketing}
+                  onChange={e => setConsentMarketing(e.target.checked)}
+                  className="mt-0.5 flex-shrink-0 accent-[#C0392B] w-4 h-4"
+                />
+                <span className="text-xs text-gray-500 leading-relaxed">
+                  (Opcional) Acepto recibir anuncios personalizados en Facebook e Instagram y que Quality Sports
+                  comparta mis datos con Meta Platforms (EE.UU.) para medir conversiones y optimizar campañas publicitarias.
+                </span>
+              </label>
             </div>
           </div>
         </div>

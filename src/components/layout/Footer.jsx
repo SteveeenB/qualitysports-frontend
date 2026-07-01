@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { clearConsent } from '../CookieConsentBanner'
 
 export default function Footer() {
   return (
@@ -73,6 +74,33 @@ export default function Footer() {
                 </li>
               ))}
             </ul>
+
+            <h4 className="font-semibold text-sm mt-6 mb-3 text-white">Legal</h4>
+            <ul className="space-y-2.5">
+              <li>
+                <Link
+                  to="/politica-privacidad"
+                  className="text-sm transition-colors"
+                  style={{ color: '#9CA3AF' }}
+                  onMouseOver={e => e.currentTarget.style.color = '#FFFFFF'}
+                  onMouseOut={e => e.currentTarget.style.color = '#9CA3AF'}
+                >
+                  Política de Privacidad
+                </Link>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => { clearConsent(); window.location.reload() }}
+                  className="text-sm transition-colors text-left"
+                  style={{ color: '#9CA3AF' }}
+                  onMouseOver={e => e.currentTarget.style.color = '#FFFFFF'}
+                  onMouseOut={e => e.currentTarget.style.color = '#9CA3AF'}
+                >
+                  Preferencias de cookies
+                </button>
+              </li>
+            </ul>
           </div>
 
           {/* Contacto */}
@@ -89,7 +117,7 @@ export default function Footer() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mt-0.5 flex-shrink-0">
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
                 </svg>
-                <span>qualitysports@gmail.com</span>
+                <span>qualitysports414@gmail.com</span>
               </div>
               <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                 <p className="text-xs leading-relaxed text-gray-500">

@@ -1,9 +1,29 @@
 const PIXEL_ID = import.meta.env.VITE_META_PIXEL_ID
 
+const CONSENT_KEY = 'qs_cookie_consent'
+const CONSENT_TTL_MS = 365 * 24 * 60 * 60 * 1000
+
+export function getStoredConsent() {
+  try {
+    const raw = localStorage.getItem(CONSENT_KEY)
+    if (!raw) return null
+    const c = JSON.parse(raw)
+    if (Date.now() - c.timestamp > CONSENT_TTL_MS) {
+      localStorage.removeItem(CONSENT_KEY)
+      return null
+    }
+    return c
+  } catch { return null }
+}
+
+export function hasMarketingConsent() {
+  return getStoredConsent()?.marketing === true
+}
+
 /**
  * Inyecta el script de Meta Pixel en <head> e inicializa el pixel.
- * Llamar UNA sola vez en main.jsx antes de render().
- * No hace nada si VITE_META_PIXEL_ID está vacío (entorno local).
+ * Solo debe llamarse después de que el usuario otorga consentimiento de marketing
+ * (desde CookieConsentBanner o al detectar consentimiento previo en localStorage).
  */
 export function initPixel() {
   if (!PIXEL_ID) return
@@ -26,7 +46,9 @@ export function initPixel() {
 // ── Helper interno ────────────────────────────────────────────────────────────
 
 function track(eventName, params = {}, eventId = null) {
+  // Sin consentimiento de marketing o sin Pixel cargado → no trackear
   if (!PIXEL_ID || typeof window.fbq !== 'function') return
+  if (!hasMarketingConsent()) return
   const options = eventId ? { eventID: eventId } : {}
   window.fbq('track', eventName, params, options)
 }
